@@ -1,0 +1,66 @@
+# checkup-brief — CI
+# 只做健康科普，不做诊断，不能替代医生。
+# 每次 push / PR 时跑：语法检查 + 示例数据回归测试。
+# 不需要任何外部服务，不需要密钥，不上传数据。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax check (all src + web js)
+        run: |
+          node --check src/reference-ranges.js
+          node --check src/aliases.js
+          node --check src/parser.js
+          node --check src/briefing.js
+          node --check src/package-recommender.js
+          node --check src/clinic-guide.js
+          node --check src/plan-30d.js
+          node --check web/app.js
+
+      - name: Sample regression test (score must be 68)
+        run: |
+          node -e "
+            const fs = require('fs');
+            const { parseReportText } = require('./src/parser.js');
+            const { buildBriefing } = require('./src/briefing.js');
+            const { recommendPackage } = require('./src/package-recommender.js');
+            const { buildClinicGuide } = require('./src/clinic-guide.js');
+            const { buildPlan30d } = require('./src/plan-30d.js');
+            const text = fs.readFileSync('examples/sample-report.txt', 'utf8');
+            const items = parseReportText(text);
+            if (items.length < 10) throw new Error('parsed too few items: ' + items.length);
+            const briefing = buildBriefing(items, { age: 32, sex: 'male' });
+            if (briefing.score !== 68) throw new Error('expected score 68, got ' + briefing.score);
+            if (briefing.counts.abnormal !== 4) throw new Error('expected 4 abnormal, got ' + briefing.counts.abnormal);
+            const pkg = recommendPackage({ profile: { age: 32, sex: 'male' }, items, budget: 1500 });
+            if (pkg.add.length === 0) throw new Error('package recommender returned no add-ons');
+            const guides = buildClinicGuide(items);
+            if (guides.length === 0) throw new Error('clinic guide returned nothing');
+            const plan = buildPlan30d(items, { age: 32, sex: 'male' });
+            if (plan.weeks.length !== 4 || plan.checklist.length !== 30) throw new Error('30-day plan is incomplete');
+            console.log('OK: parsed ' + items.length + ' items, score ' + briefing.score);
+          "
+
+      - name: Check no real report files are tracked
+        run: |
+          if git ls-files | grep -Ei '(体检|报告|report).*\.(pdf|png|jpg|jpeg)$'; then
+            echo 'Real report files must not be tracked. Use examples/ sample data only.'
+            exit 1
+          fi
+          echo 'OK: no report files tracked'

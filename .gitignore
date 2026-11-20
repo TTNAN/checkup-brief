@@ -1,0 +1,53 @@
+# checkup-brief — .gitignore
+# 重要：不要把真实体检报告、真实个人信息提交到仓库。
+# 只用 examples/ 里的脱敏示例数据。
+
+# 真实体检报告（任何格式）——一律不收
+*.pdf
+*.png
+*.jpg
+*.jpeg
+*.heic
+*体检*.txt
+*报告*.txt
+*report*.pdf
+reports/
+private/
+uploads/
+
+# 例外：docs/screenshots/ 里只放脱敏示例截图，允许提交
+!docs/screenshots/*.png
+!docs/screenshots/*.jpg
+
+# 环境变量与密钥
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+dist/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

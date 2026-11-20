@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>checkup-brief — 把体检报告翻译成人话</title>
+<meta name="description" content="把体检报告翻译成人话：一页纸简报、解析器、套餐推荐、挂号清单、30 天计划。只做健康科普，不做诊断，不能替代医生。">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">checkup-brief<small>CHECKUP BRIEF · 一页纸人话简报</small></div>
+    <div class="lang" role="group" aria-label="语言 / Language">
+      <button type="button" data-lang="zh" class="active">中文</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <div class="disclaimer" id="disclaimer"><strong>只做健康科普，不做诊断，不能替代医生。</strong></div>
+
+  <h1 id="tagline">把体检报告，翻译成人话。</h1>
+  <p class="lede" id="lede">粘贴体检报告，得到一页纸人话简报：总分、红黄绿灯、每项异常讲清楚，下次查什么、挂什么科、30 天怎么改，都在同一页里。</p>
+
+  <p class="muted">示例数据，已脱敏：32 岁男性，体检日期 2026-11-10。总分 68 分。数据只在你的浏览器里处理，不上传。</p>
+
+  <nav class="tabs" aria-label="模块">
+    <button type="button" data-panel="briefing" class="active">一页纸简报</button>
+    <button type="button" data-panel="parser">解析器</button>
+    <button type="button" data-panel="package">套餐推荐</button>
+    <button type="button" data-panel="clinic">挂号清单</button>
+    <button type="button" data-panel="plan">30 天计划</button>
+  </nav>
+
+  <main>
+    <section class="panel active" id="briefing" aria-label="一页纸简报"></section>
+    <section class="panel" id="parser" aria-label="解析器"></section>
+    <section class="panel" id="package" aria-label="套餐推荐"></section>
+    <section class="panel" id="clinic" aria-label="挂号清单"></section>
+    <section class="panel" id="plan" aria-label="30 天计划"></section>
+  </main>
+
+  <footer>
+    <p>checkup-brief · MIT License · 作者 TTNAN</p>
+    <p>只做健康科普，不做诊断，不能替代医生。参考范围以你报告单上印的为准。本页不收集、不上传任何数据；请勿粘贴真实体检报告到公开场合。</p>
+    <p><a href="../README.md">README（中文）</a> · <a href="../README_EN.md">README (English)</a> · <a href="../examples/sample-brief.md">示例简报 Markdown</a></p>
+  </footer>
+
+</div>
+
+<script src="../src/reference-ranges.js"></script>
+<script src="../src/aliases.js"></script>
+<script src="../src/parser.js"></script>
+<script src="../src/briefing.js"></script>
+<script src="../src/package-recommender.js"></script>
+<script src="../src/clinic-guide.js"></script>
+<script src="../src/plan-30d.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
