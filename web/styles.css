@@ -355,3 +355,11 @@ pre.json { background: var(--paper-2); border-radius: 14px; padding: 16px; font-
 .paste-bar { flex-wrap: wrap; row-gap: 6px; }
 .paste-bar > * { white-space: nowrap; }
 @media (max-width: 560px) { .paste-bar { gap: 14px; padding: 12px 16px; } .drop { margin: 12px 12px 0; padding: 14px; } }
+/* 30 天计划：吃 / 动 / 睡 在窄屏改成上下排 */
+@media (max-width: 760px) {
+  .daily3 { grid-template-columns: 1fr; gap: 10px; }
+  .daily3 .card { display: grid; grid-template-columns: 2.2em 1fr; gap: 0 12px; align-items: start; padding: 16px 18px; }
+  .daily3 h3 { margin: 2px 0 0; font-size: 17px; color: var(--brand); }
+  .daily3 ul { margin: 0; padding-left: 16px; font-size: 14px; line-height: 1.65; }
+  .daily3 li + li { margin-top: 4px; }
+}
