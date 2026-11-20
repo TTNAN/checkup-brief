@@ -1,10 +1,10 @@
 // checkup-brief — web/app.js
-// 静态演示页的交互逻辑：中/EN 切换、五个模块切换、解析器、打卡。
-// 不用任何外部库，不上传任何数据。所有处理都在浏览器本地完成。
+// 演示页交互：粘贴 / 拖入报告 → 解析 → 五个模块；中 / EN 切换；分享长图；30 天打卡。
+// 零依赖，不发任何网络请求。打卡和语言偏好只存在本机 localStorage。
 // 只做健康科普，不做诊断，不能替代医生。
 'use strict';
 
-/* ---------- 示例数据（与 examples/sample-report.txt 完全一致，已脱敏） ---------- */
+/* ---------- 示例数据（与 examples/sample-report.txt 一致，已脱敏） ---------- */
 const SAMPLE_TEXT = [
   '总胆固醇(TC) 6.12 mmol/L 参考范围 <5.2',
   '甘油三酯(TG) 2.48 mmol/L 参考范围 <1.7',
@@ -26,241 +26,522 @@ const SAMPLE_TEXT = [
   '血压 132/84 mmHg',
 ].join('\n');
 
-const PROFILE = { age: 32, sex: 'male', familyHistory: [], budget: 1500 };
-
-/* ---------- 中英文文案 ---------- */
-const I18N = {
+/* ---------- 界面文案 ---------- */
+const UI = {
   zh: {
-    tagline: '把体检报告，翻译成人话。',
-    lede: '粘贴体检报告，得到一页纸人话简报：总分、红黄绿灯、每项异常讲清楚，下次查什么、挂什么科、30 天怎么改，都在同一页里。',
-    disclaimer: '只做健康科普，不做诊断，不能替代医生。',
-    tabs: ['一页纸简报', '解析器', '套餐推荐', '挂号清单', '30 天计划'],
-    scoreLabel: '分',
-    abnormal: '项超出范围',
-    borderline: '项正常偏高',
-    normal: '项正常',
-    parseTitle: '解析器',
-    parseHint: '粘贴体检报告文字，或点“载入示例”试试。解析只在你的浏览器里进行，不上传。',
-    loadSample: '载入示例报告',
-    runParse: '开始解析',
-    packageTitle: '下次体检，建议这样选',
-    clinicTitle: '挂号与问诊清单',
-    planTitle: '30 天改善计划',
-    planHeadline: '未来 30 天，重点关注：血脂、尿酸、肝脏、血糖、血压。每天只做 3 件小事。',
-    shareTitle: '分享长图（示例）',
-    shareHint: '下面这张卡片可以直接截图分享给家人。',
+    localBadge: '100% 本地处理 · 不上传',
+    eyebrow: 'CHECKUP BRIEF · 一页纸人话简报',
+    title: '体检单看不懂？<br><em>一页纸</em>，翻译成人话。',
+    lede: '粘贴体检报告，几秒钟得到：总分和红黄绿灯、每项异常一句人话、下次该查什么、该挂哪个科、接下来 30 天怎么改。',
+    ctaSample: '用示例报告试一下', ctaMine: '粘贴我的报告',
+    point1: '30+ 指标别名自动识别', point2: '优先用报告单上的参考范围', point3: '零依赖，断网也能用',
+    miniTc: '总胆固醇', miniUa: '尿酸', miniFpg: '空腹血糖', miniHb: '血红蛋白',
+    disclaimer: '只做健康科普，不做诊断，不能替代医生。一切以报告单上的参考范围和医生解释为准。',
+    inputTitle: '把报告粘贴进来',
+    inputHint: '支持直接复制的文字、OCR 识别结果、PDF 里复制出来的文本，也可以把 .txt 文件拖进来。',
+    placeholder: '例如：\n总胆固醇(TC) 6.12 mmol/L 参考范围 <5.2\n尿酸(UA) 452 umol/L 参考范围 208-428\n血压 132/84 mmHg',
+    loadSample: '载入示例（已脱敏）', clear: '清空', lines: (n) => `${n} 行`,
+    profileTitle: '关于你', profileHint: '用于套餐推荐和 30 天计划，只在本地使用。',
+    age: '年龄', sex: '性别', male: '男', female: '女', family: '家族史',
+    famDiabetes: '糖尿病', famCardio: '心血管病', famCancer: '肿瘤', budget: '下次体检预算',
+    run: '生成我的简报',
+    resultTitle: '你的一页纸简报',
+    parsedMeta: (n, r) => `识别出 ${n} 项指标，其中 ${r} 项用的是报告单上印的参考范围。`,
+    tab1: '一页纸简报', tab2: '解析结果', tab3: '下次查什么', tab4: '挂号清单', tab5: '30 天计划',
+    footer1: 'checkup-brief · MIT License · 作者 TTNAN',
+    footer2: '只做健康科普，不做诊断，不能替代医生。本页没有统计、没有第三方请求，你粘贴的内容不会离开这台设备；30 天打卡只存在本机浏览器里。',
+    points: '分', outOfRange: '超出范围', borderline: '正常偏高', normal: '正常',
+    status: { high: '偏高', low: '偏低', 'borderline-high': '正常偏高', 'borderline-low': '正常偏低', normal: '正常', unknown: '无法判定' },
+    share: '生成分享长图', print: '打印 / 存 PDF', save: '保存图片', close: '关闭',
+    rule: '计分规则公开：满分 100，超出范围一项扣 7 分，正常偏高 / 偏低扣 2 分，血压只算一次。只是帮助理解的科普工具，不是医学评分。',
+    showNormal: (n) => `展开其余 ${n} 项正常指标`, hideNormal: '收起正常指标',
+    colName: '指标', colValue: '结果', colRange: '参考范围', colSource: '范围来源', colStatus: '状态', colFlag: '报告标记',
+    srcReport: '报告单', srcBuiltin: '内置',
+    showJson: '查看 JSON', hideJson: '收起 JSON', copyJson: '复制 JSON',
+    pkgAdd: '建议加查', pkgOpt: '可选', pkgSkip: '可以省掉',
+    estimate: (lo, hi, b) => `建议加查的项目大约 ¥${lo}–${hi}，你的预算 ¥${b}`,
+    noAdd: '本次没有需要针对性复查的项目。',
+    bring: '带上这些', ask: '问医生这几个问题', copyQ: '复制问题', noClinic: '这次没有需要专门挂号的指标，按常规每年体检即可。',
+    weekN: (n) => `第 ${n} 周`, today3: '今天的 3 件小事', dayN: (n) => `第 ${n} 天`,
+    checkin: '30 天打卡', streak: (n) => `连续 ${n} 天`, eat: '吃', move: '动', sleep: '睡',
+    legend: '三个点都亮 = 当天全部完成', reset: '重置打卡',
+    daily: { eat: '吃', move: '动', sleep: '睡' },
+    copied: '已复制', savedImg: '图片已生成', empty: '没识别到指标，换个格式试试，或先载入示例看看效果。',
+    shareTitle: '体检人话简报', shareFoot: '只做健康科普，不做诊断，不能替代医生',
+    shareAbn: '需要留意', shareOk: (n) => `其余 ${n} 项正常`,
   },
   en: {
-    tagline: 'Turn your checkup report into plain language.',
-    lede: 'Paste a health checkup report and get a one-page briefing in plain language: an overall score, red / yellow / green lights, a clear explanation for every abnormal result, plus what to check next time, which department to visit, and a 30-day plan — all on one page.',
-    disclaimer: 'For health education only. This is not a diagnosis and does not replace a doctor.',
-    tabs: ['Briefing', 'Parser', 'Checkup Package', 'Clinic Guide', '30-Day Plan'],
-    scoreLabel: 'points',
-    abnormal: 'out of range',
-    borderline: 'borderline high',
-    normal: 'normal',
-    parseTitle: 'Parser',
-    parseHint: 'Paste your report text, or click “Load sample” to try it. Parsing runs entirely in your browser. Nothing is uploaded.',
-    loadSample: 'Load sample report',
-    runParse: 'Parse',
-    packageTitle: 'What to check next time',
-    clinicTitle: 'Clinic & consultation checklist',
-    planTitle: '30-day improvement plan',
-    planHeadline: 'For the next 30 days, focus on: lipids, uric acid, liver, blood sugar, and blood pressure. Just three small things a day.',
-    shareTitle: 'Share card (sample)',
-    shareHint: 'Screenshot the card below to share it with family.',
+    localBadge: '100% local · nothing uploaded',
+    eyebrow: 'CHECKUP BRIEF · ONE-PAGE PLAIN-LANGUAGE BRIEF',
+    title: 'Can\'t read your checkup?<br>Get it on <em>one page</em>, in plain words.',
+    lede: 'Paste your report and get, in seconds: a score and traffic lights, one plain sentence per abnormal result, what to check next time, which department to see, and a 30-day plan.',
+    ctaSample: 'Try the sample report', ctaMine: 'Paste my report',
+    point1: '30+ indicator aliases', point2: 'Uses the ranges printed on your report', point3: 'Zero dependencies, works offline',
+    miniTc: 'Cholesterol', miniUa: 'Uric acid', miniFpg: 'Glucose', miniHb: 'Hemoglobin',
+    disclaimer: 'Health education only. Not a diagnosis, not a substitute for a doctor. Your report\'s reference ranges and your doctor\'s reading come first.',
+    inputTitle: 'Paste your report',
+    inputHint: 'Copied text, OCR output or text from a PDF all work — or drop a .txt file here. Chinese reports are the main target.',
+    placeholder: 'e.g.\n总胆固醇(TC) 6.12 mmol/L 参考范围 <5.2\n尿酸(UA) 452 umol/L 参考范围 208-428\n血压 132/84 mmHg',
+    loadSample: 'Load sample (anonymised)', clear: 'Clear', lines: (n) => `${n} lines`,
+    profileTitle: 'About you', profileHint: 'Used for the package and the 30-day plan. Stays on this device.',
+    age: 'Age', sex: 'Sex', male: 'Male', female: 'Female', family: 'Family history',
+    famDiabetes: 'Diabetes', famCardio: 'Heart disease', famCancer: 'Cancer', budget: 'Next checkup budget',
+    run: 'Build my brief',
+    resultTitle: 'Your one-page brief',
+    parsedMeta: (n, r) => `Found ${n} indicators; ${r} use the reference range printed on your report.`,
+    tab1: 'Brief', tab2: 'Parsed', tab3: 'Next checkup', tab4: 'Clinic guide', tab5: '30-day plan',
+    footer1: 'checkup-brief · MIT License · by TTNAN',
+    footer2: 'Health education only, not a diagnosis. No analytics, no third-party requests; what you paste never leaves this device. Check-ins live only in this browser.',
+    points: 'pts', outOfRange: 'out of range', borderline: 'borderline', normal: 'normal',
+    status: { high: 'High', low: 'Low', 'borderline-high': 'Borderline high', 'borderline-low': 'Borderline low', normal: 'Normal', unknown: 'Unknown' },
+    share: 'Make share image', print: 'Print / PDF', save: 'Save image', close: 'Close',
+    rule: 'Open scoring: start at 100, −7 per out-of-range result, −2 per borderline, blood pressure counted once. A learning aid, not a medical score.',
+    showNormal: (n) => `Show the other ${n} normal results`, hideNormal: 'Hide normal results',
+    colName: 'Indicator', colValue: 'Result', colRange: 'Reference', colSource: 'Range from', colStatus: 'Status', colFlag: 'Report flag',
+    srcReport: 'Report', srcBuiltin: 'Built-in',
+    showJson: 'Show JSON', hideJson: 'Hide JSON', copyJson: 'Copy JSON',
+    pkgAdd: 'Add these', pkgOpt: 'Optional', pkgSkip: 'Skip these',
+    estimate: (lo, hi, b) => `Recommended add-ons cost about ¥${lo}–${hi}; your budget is ¥${b}`,
+    noAdd: 'Nothing needs a targeted recheck this time.',
+    bring: 'Bring', ask: 'Ask the doctor', copyQ: 'Copy questions', noClinic: 'Nothing needs a dedicated visit. A routine yearly checkup is enough.',
+    weekN: (n) => `Week ${n}`, today3: 'Today\'s three small things', dayN: (n) => `Day ${n}`,
+    checkin: '30-day check-in', streak: (n) => `${n}-day streak`, eat: 'Eat', move: 'Move', sleep: 'Sleep',
+    legend: 'All three dots lit = day complete', reset: 'Reset',
+    daily: { eat: 'Eat', move: 'Move', sleep: 'Sleep' },
+    copied: 'Copied', savedImg: 'Image ready', empty: 'No indicators found. Try another format, or load the sample first.',
+    shareTitle: 'Checkup, in plain words', shareFoot: 'Health education only · not a diagnosis',
+    shareAbn: 'Worth attention', shareOk: (n) => `${n} others normal`,
   },
 };
 
-let lang = 'zh';
-let items = parseReportText(SAMPLE_TEXT);
-let briefing = buildBriefing(items, PROFILE);
-
-/* 英文人话讲解（仅演示页内使用；完整英文简报见 README_EN.md）。 */
-const EN_EXPLANATIONS = {
-  tc: { high: 'Total cholesterol is high. Both dietary fat and cholesterol made by the body can raise it, and a persistently high level adds strain on blood vessels. Start with diet and exercise, then recheck the trend.' },
-  tg: { high: 'Triglycerides are high, most directly linked to oily food, alcohol, sugary food, and too little exercise. This is the most lifestyle-sensitive marker — and the easiest to bring down.' },
-  ua: { high: 'Uric acid is high. Seafood, red meat, organ meat, beer, and sugary drinks can raise it. A persistently high level deserves attention for gout and kidney strain. Drink more water and less alcohol.' },
-  fpg: { 'borderline-high': 'Fasting glucose is on the high side of normal — not abnormal yet, but worth watching. Eat fewer refined carbs, move more, and keep weight in check.' },
-  alt: { high: 'ALT is mildly elevated, suggesting the liver is under some strain. Common causes include fatty liver, alcohol, late nights, and some medicines. Avoid alcohol, keep a regular sleep schedule, and recheck in 1–3 months.' },
-  sbp: { 'borderline-high': 'Systolic pressure is on the high side of normal — not hypertension yet, but already a signal. Less salt, weight control, and regular exercise all help.' },
-  dbp: { 'borderline-high': 'Diastolic pressure is on the high side of normal. Like systolic pressure, start with less salt, exercise, and sleep.' },
+/* ---------- 状态 ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('checkup-brief.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem('checkup-brief.' + k, JSON.stringify(v)); } catch { /* 隐私模式下忽略 */ } },
 };
-function enExplanation(item) {
-  if (EN_EXPLANATIONS[item.id] && EN_EXPLANATIONS[item.id][item.status]) return EN_EXPLANATIONS[item.id][item.status];
-  if (item.status === 'high') return `${item.name} is high (${item.value} ${item.unit}). Please recheck and talk to a doctor.`;
-  if (item.status === 'borderline-high') return `${item.name} is on the high side of normal (${item.value} ${item.unit}). Not abnormal yet, but worth watching.`;
-  return `${item.name} is normal (${item.value} ${item.unit}).`;
-}
-function enSummary() {
-  const abnormal = briefing.items.filter((i) => i.status === 'high' || i.status === 'low');
-  const names = abnormal.map((i) => i.name).join(', ');
-  return `32-year-old male. ${abnormal.length} result${abnormal.length > 1 ? 's' : ''} out of range (${names}), and ${briefing.counts.borderline} borderline high. Don't panic — most of these relate to diet, exercise, sleep, and alcohol. Focus on rechecking the trend and bringing the report to a doctor.`;
-}
-
-const STATUS_LABEL = {
-  zh: { high: '偏高', low: '偏低', 'borderline-high': '正常偏高', 'borderline-low': '正常偏低', normal: '正常', unknown: '无法判定' },
-  en: { high: 'High', low: 'Low', 'borderline-high': 'Borderline high', 'borderline-low': 'Borderline low', normal: 'Normal', unknown: 'Unknown' },
+const state = {
+  lang: store.get('lang', (navigator.language || 'zh').startsWith('zh') ? 'zh' : 'en'),
+  profile: { age: 32, sex: 'male', familyHistory: [], budget: 1500 },
+  items: [],
+  showNormal: false,
+  week: null,
+  selectedDay: null,
 };
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const t = () => UI[state.lang];
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const color = (s) => (s === 'high' || s === 'low' ? 'red' : s === 'borderline-high' || s === 'borderline-low' ? 'yellow' : s === 'unknown' ? 'gray' : 'green');
+const nm = (i) => (state.lang === 'en' ? i.en || i.name : i.name);
+const RING_COLORS = { green: 'var(--green)', yellow: 'var(--yellow)', red: 'var(--red)' };
 
-function statusClass(status) {
-  if (status === 'high' || status === 'low') return 'red';
-  if (status === 'borderline-high' || status === 'borderline-low') return 'yellow';
-  return 'green';
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove('on'), 1600);
+}
+function copy(text) {
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(() => toast(t().copied)).catch(() => {});
 }
 
-function esc(s) {
-  return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+/* ---------- 静态文案 ---------- */
+function applyI18n() {
+  const u = t();
+  document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+  $$('[data-i18n]').forEach((el) => { const v = u[el.dataset.i18n]; if (typeof v === 'string') el.textContent = v; });
+  $$('[data-i18n-html]').forEach((el) => { el.innerHTML = u[el.dataset.i18nHtml]; });
+  $$('[data-i18n-ph]').forEach((el) => { el.placeholder = u[el.dataset.i18nPh]; });
+  $$('.nav .seg button').forEach((b) => b.classList.toggle('on', b.dataset.lang === state.lang));
+  updateLineCount();
 }
 
-function renderBriefing() {
-  const t = I18N[lang];
-  const el = document.getElementById('briefing');
-  const rows = briefing.items.map((item) => {
-    const cls = statusClass(item.status);
-    const range = item.range.low != null && item.range.high != null
-      ? `${item.range.low}–${item.range.high}`
-      : item.range.high != null ? `< ${item.range.high}` : `> ${item.range.low}`;
-    return `<tr class="${cls === 'red' ? 'row-red' : cls === 'yellow' ? 'row-yellow' : ''}">
-      <td><span class="dot ${cls}"></span>${esc(item.name)}</td>
-      <td>${item.value} ${esc(item.unit)}</td>
-      <td>${range}</td>
-      <td class="status-${cls}">${STATUS_LABEL[lang][item.status] || item.status}</td>
-      <td>${esc(lang === 'en' ? enExplanation(item) : item.explanation)}</td>
-    </tr>`;
-  }).join('');
-  const summaryText = lang === 'en' ? enSummary() : briefing.summary;
-  const levelText = lang === 'en'
-    ? (briefing.score >= 90 ? 'Looking good' : briefing.score >= 75 ? 'Mostly good' : briefing.score >= 60 ? 'A few things to watch' : 'Please talk to a doctor soon')
-    : briefing.level;
-  el.innerHTML = `
-    <div class="score"><b>${briefing.score}</b><span>${t.scoreLabel} · ${esc(levelText)}</span></div>
-    <p class="counts">${briefing.counts.abnormal} ${t.abnormal} · ${briefing.counts.borderline} ${t.borderline} · ${briefing.counts.normal} ${t.normal}</p>
-    <p>${esc(summaryText)}</p>
-    <table><thead><tr><th>${lang === 'zh' ? '指标' : 'Indicator'}</th><th>${lang === 'zh' ? '结果' : 'Result'}</th><th>${lang === 'zh' ? '参考范围' : 'Reference'}</th><th>${lang === 'zh' ? '状态' : 'Status'}</th><th>${lang === 'zh' ? '人话讲解' : 'In plain language'}</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="share-card">
-      <h2>${t.shareTitle}</h2>
-      <p class="muted">${t.shareHint}</p>
-      <div class="big">${briefing.score} ${t.scoreLabel}</div>
-      <p>${esc(summaryText)}</p>
-      <p class="muted">${t.disclaimer}</p>
+function updateLineCount() {
+  const n = $('#reportText').value.split('\n').filter((l) => l.trim()).length;
+  $('#lineCount').textContent = n ? t().lines(n) : '';
+}
+
+/* ---------- 参考范围条 ---------- */
+function gaugeHTML(item) {
+  const { low, high } = item.range || {};
+  const v = item.value;
+  if (low == null && high == null) return '<div class="gauge"></div>';
+  let min; let max;
+  if (low != null && high != null) {
+    const span = high - low || 1;
+    min = Math.max(low > 0 ? 0 : low, low - span * 0.4);
+    max = high + span * 0.4;
+  } else if (high != null) {
+    min = 0; max = high * 1.5;
+  } else {
+    min = Math.max(0, low * 0.5); max = low * 2.2;
+  }
+  min = Math.min(min, v - (max - min) * 0.05);
+  max = Math.max(max, v + (max - min) * 0.05);
+  const pct = (x) => Math.max(0, Math.min(100, ((x - min) / (max - min)) * 100));
+  const okL = pct(low != null ? low : min);
+  const okR = pct(high != null ? high : max);
+  let edge = '';
+  if (high != null && low != null) {
+    const start = item.id === 'sbp' ? 120 : item.id === 'dbp' ? 80 : high - (high - low) * 0.1;
+    edge = `<span class="edge" style="left:${pct(start)}%;width:${pct(high) - pct(start)}%"></span>`;
+  }
+  const ticks = [low, high].filter((x) => x != null).map((x) => `<span class="tick" style="left:${pct(x)}%">${x}</span>`).join('');
+  return `<div class="gauge"><div class="rail"><span class="ok" style="left:${okL}%;width:${okR - okL}%"></span>${edge}</div>
+    ${ticks}<span class="dot ${color(item.status)}" data-left="${pct(v)}"></span></div>`;
+}
+
+function animateGauges(root) {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    $$('.dot[data-left]', root).forEach((d) => { d.style.left = d.dataset.left + '%'; });
+  }));
+}
+
+function animateRing(bar, numEl, score, total = 597) {
+  bar.style.strokeDashoffset = total;
+  requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.strokeDashoffset = total * (1 - score / 100); }));
+  if (!numEl) return;
+  const t0 = performance.now();
+  const dur = 1300;
+  const step = (now) => {
+    const p = Math.min(1, (now - t0) / dur);
+    numEl.textContent = Math.round(score * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ---------- 1. 一页纸简报 ---------- */
+function renderBrief(animate) {
+  const u = t();
+  const b = buildBriefing(state.items, state.profile, state.lang);
+  state.briefing = b;
+  const groups = globalThis.GROUPS;
+  const flagged = b.items.filter((i) => i.status !== 'normal');
+  const normal = b.items.filter((i) => i.status === 'normal');
+  const order = { high: 0, low: 0, 'borderline-high': 1, 'borderline-low': 1, unknown: 2 };
+  flagged.sort((a, c) => order[a.status] - order[c.status]);
+
+  const row = (i, k) => `
+    <div class="item ${color(i.status)}" style="animation-delay:${animate ? 0.25 + k * 0.07 : 0}s">
+      <div class="name">${esc(nm(i))}<small>${esc(groups[i.group] ? groups[i.group][state.lang] : '')}</small></div>
+      ${gaugeHTML(i)}
+      <div><span class="val">${i.value}<small>${esc(i.unit)}</small></span> &nbsp;<span class="badge ${color(i.status)}">${u.status[i.status]}</span></div>
+      ${i.status !== 'normal' ? `<p class="explain">${esc(i.explanation)}</p>` : ''}
     </div>`;
-}
 
-function renderParser() {
-  const t = I18N[lang];
-  const el = document.getElementById('parser');
-  const rows = items.map((item) => {
-    const cls = statusClass(item.status);
-    return `<tr><td>${esc(item.name)}</td><td>${item.value} ${esc(item.unit)}</td><td class="status-${cls}">${STATUS_LABEL[lang][item.status] || item.status}</td><td>${item.range.source === 'report' ? (lang === 'zh' ? '报告单' : 'Report') : (lang === 'zh' ? '内置' : 'Built-in')}</td></tr>`;
-  }).join('');
-  el.innerHTML = `
-    <h2>${t.parseTitle}</h2>
-    <p class="muted">${t.parseHint}</p>
-    <label>${lang === 'zh' ? '体检报告文字' : 'Report text'}</label>
-    <textarea id="reportText">${esc(SAMPLE_TEXT)}</textarea>
-    <div>
-      <button class="primary" id="runParse">${t.runParse}</button>
-      <button class="ghost" id="loadSample">${t.loadSample}</button>
+  const normalBlock = normal.length ? `
+    <div class="group-title">${u.normal} · ${normal.length}</div>
+    <div class="items" id="normalItems" ${state.showNormal ? '' : 'hidden'}>${normal.map((i, k) => row(i, k)).join('')}</div>
+    <button class="btn ghost small more" id="toggleNormal" type="button">${state.showNormal ? u.hideNormal : u.showNormal(normal.length)}</button>` : '';
+
+  $('#panel-brief').innerHTML = `
+    <div class="card overview">
+      <div class="ring"><svg viewBox="0 0 220 220"><circle cx="110" cy="110" r="95" class="track"/><circle cx="110" cy="110" r="95" class="bar" id="ringBar" style="stroke:${RING_COLORS[b.color]}"/></svg>
+        <div class="num"><b id="scoreNum">${b.score}</b><span>/ 100 ${u.points}</span></div></div>
+      <div>
+        <span class="level ${b.color}">${esc(b.level)}</span>
+        <p class="summary">${esc(b.summary)}</p>
+        <div class="counts">
+          <span class="count red"><b>${b.counts.abnormal}</b>${u.outOfRange}</span>
+          <span class="count yellow"><b>${b.counts.borderline}</b>${u.borderline}</span>
+          <span class="count green"><b>${b.counts.normal}</b>${u.normal}</span>
+        </div>
+        <div class="actions">
+          <button class="btn primary small" id="shareBtn" type="button">${u.share}</button>
+          <button class="btn ghost small" id="printBtn" type="button">${u.print}</button>
+        </div>
+        <p class="rule">${u.rule}</p>
+      </div>
     </div>
-    <div id="parseResult"><table><thead><tr><th>${lang === 'zh' ? '指标' : 'Indicator'}</th><th>${lang === 'zh' ? '结果' : 'Result'}</th><th>${lang === 'zh' ? '状态' : 'Status'}</th><th>${lang === 'zh' ? '范围来源' : 'Range source'}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  document.getElementById('runParse').addEventListener('click', () => {
-    const text = document.getElementById('reportText').value;
-    items = parseReportText(text);
-    briefing = buildBriefing(items, PROFILE);
-    renderAll();
-  });
-  document.getElementById('loadSample').addEventListener('click', () => {
-    document.getElementById('reportText').value = SAMPLE_TEXT;
-    items = parseReportText(SAMPLE_TEXT);
-    briefing = buildBriefing(items, PROFILE);
-    renderAll();
-  });
+    ${flagged.length ? `<div class="group-title">${u.outOfRange} / ${u.borderline} · ${flagged.length}</div><div class="items">${flagged.map((i, k) => row(i, k)).join('')}</div>` : ''}
+    ${normalBlock}`;
+
+  animateRing($('#ringBar'), animate ? $('#scoreNum') : null, b.score);
+  animateGauges($('#panel-brief'));
+  $('#shareBtn').onclick = openShare;
+  $('#printBtn').onclick = () => { showTab('brief'); window.print(); };
+  const tg = $('#toggleNormal');
+  if (tg) tg.onclick = () => { state.showNormal = !state.showNormal; renderBrief(false); };
 }
 
+/* ---------- 2. 解析结果 ---------- */
+function renderParser() {
+  const u = t();
+  const rows = state.items.map((i) => `<tr>
+      <td><i class="sdot ${color(i.status)}"></i>${esc(nm(i))}</td>
+      <td class="mono">${i.value} ${esc(i.unit)}</td>
+      <td class="mono">${esc(formatRange(i.range))}</td>
+      <td><span class="src ${i.range.source}">${i.range.source === 'report' ? u.srcReport : u.srcBuiltin}</span></td>
+      <td>${i.flag === 'up' ? '↑' : i.flag === 'down' ? '↓' : '—'}</td>
+      <td><span class="badge ${color(i.status)}">${u.status[i.status]}</span></td></tr>`).join('');
+  $('#panel-parser').innerHTML = `
+    <div class="table-wrap"><table>
+      <thead><tr><th>${u.colName}</th><th>${u.colValue}</th><th>${u.colRange}</th><th>${u.colSource}</th><th>${u.colFlag}</th><th>${u.colStatus}</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <p style="margin-top:14px"><button class="link" id="jsonToggle" type="button">${u.showJson}</button> &nbsp; <button class="link" id="jsonCopy" type="button">${u.copyJson}</button></p>
+    <pre class="json" id="jsonOut" hidden></pre>`;
+  const json = JSON.stringify(state.items.map(({ note, ...rest }) => rest), null, 2);
+  $('#jsonOut').textContent = json;
+  $('#jsonToggle').onclick = (e) => { const p = $('#jsonOut'); p.hidden = !p.hidden; e.target.textContent = p.hidden ? u.showJson : u.hideJson; };
+  $('#jsonCopy').onclick = () => copy(json);
+}
+
+/* ---------- 3. 下次查什么 ---------- */
 function renderPackage() {
-  const t = I18N[lang];
-  const rec = recommendPackage({ profile: PROFILE, items, budget: PROFILE.budget });
-  const list = (arr) => arr.map((x) => `<li><strong>${esc(x.name)}</strong> — ${esc(x.reason)}（${esc(x.price || '')}）</li>`).join('');
-  document.getElementById('package').innerHTML = `
-    <h2>${t.packageTitle}</h2>
-    <p>${esc(rec.note)}</p>
-    <div class="card"><h3>${lang === 'zh' ? '建议加查' : 'Recommended add-ons'}</h3><ul>${list(rec.add)}</ul></div>
-    <div class="card"><h3>${lang === 'zh' ? '可选' : 'Optional'}</h3><ul>${list(rec.optional)}</ul></div>
-    <div class="card"><h3>${lang === 'zh' ? '可以省掉' : 'You can skip'}</h3><ul>${list(rec.skip)}</ul></div>`;
+  const u = t();
+  const rec = recommendPackage({ profile: state.profile, items: state.items, budget: state.profile.budget, lang: state.lang });
+  const li = (x) => `<li><b>${esc(x.name)}</b><span>${esc(x.reason)}</span>${x.price ? `<br><em>${esc(x.price)}</em>` : ''}</li>`;
+  const max = Math.max(state.profile.budget, rec.estimate.high) * 1.05;
+  $('#panel-package').innerHTML = `
+    ${rec.add.length ? `<div class="card budget-bar">
+      <div class="small">${u.estimate(rec.estimate.low, rec.estimate.high, state.profile.budget)}</div>
+      <div class="track2"><span class="fill" data-w="${(rec.estimate.low / max) * 100}"></span><span class="range" style="left:${(rec.estimate.low / max) * 100}%;width:${((rec.estimate.high - rec.estimate.low) / max) * 100}%"></span>
+      <span style="position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);left:${(state.profile.budget / max) * 100}%"></span></div>
+      <div class="small muted">${esc(rec.note)}</div></div>` : ''}
+    <div class="cols">
+      <div class="card col"><h3><i class="red"></i>${u.pkgAdd}</h3><ul>${rec.add.map(li).join('') || `<li>${u.noAdd}</li>`}</ul></div>
+      <div class="card col"><h3><i class="yellow"></i>${u.pkgOpt}</h3><ul>${rec.optional.map(li).join('')}</ul></div>
+      <div class="card col skip"><h3><i class="green"></i>${u.pkgSkip}</h3><ul>${rec.skip.map(li).join('')}</ul></div>
+    </div>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => { $$('.fill[data-w]').forEach((f) => { f.style.width = f.dataset.w + '%'; }); }));
 }
 
+/* ---------- 4. 挂号清单 ---------- */
 function renderClinic() {
-  const t = I18N[lang];
-  const guides = buildClinicGuide(items);
-  const cards = guides.map((g) => `
-    <div class="card">
-      <h3>${esc(g.department)} — ${esc(g.indicator)} ${esc(g.value)}</h3>
-      <p class="muted">${esc(g.reason)}</p>
-      <p><strong>${lang === 'zh' ? '带什么' : 'Bring'}</strong></p>
-      <ul>${g.bring.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
-      <p><strong>${lang === 'zh' ? '问医生什么' : 'Ask the doctor'}</strong></p>
-      <ol>${g.questions.map((q) => `<li>${esc(q)}</li>`).join('')}</ol>
-    </div>`).join('');
-  document.getElementById('clinic').innerHTML = `<h2>${t.clinicTitle}</h2>${cards || `<p class="muted">${lang === 'zh' ? '本次没有需要挂号的异常指标。' : 'No abnormal results need a clinic visit this time.'}</p>`}`;
+  const u = t();
+  const guides = buildClinicGuide(state.items, state.lang);
+  $('#panel-clinic').innerHTML = guides.length ? `<div class="clinic-grid">${guides.map((g, k) => `
+    <div class="card clinic-card">
+      <span class="tag badge ${color(g.status)}">${esc(g.indicator)} · ${esc(g.value)}</span>
+      <p class="dept">${esc(g.department)}</p>
+      <p class="why">${esc(g.reason)}</p>
+      <h4>${u.bring}</h4><ul>${g.bring.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+      <h4>${u.ask}</h4><ol>${g.questions.map((x) => `<li>${esc(x)}</li>`).join('')}</ol>
+      <button class="btn ghost small copy" type="button" data-k="${k}">${u.copyQ}</button>
+    </div>`).join('')}</div>` : `<div class="card">${u.noClinic}</div>`;
+  $$('#panel-clinic .copy').forEach((btn) => {
+    btn.onclick = () => {
+      const g = guides[btn.dataset.k];
+      copy(`${g.department}（${g.indicator} ${g.value}）\n${g.questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}`);
+    };
+  });
+}
+
+/* ---------- 5. 30 天计划 + 打卡 ---------- */
+function getChecks() { return store.get('checks', Array.from({ length: 30 }, () => ({ eat: false, move: false, sleep: false }))); }
+function currentDay() {
+  let start = store.get('start', null);
+  if (!start) return 1;
+  const d = Math.floor((Date.now() - start) / 86400000) + 1;
+  return Math.max(1, Math.min(30, d));
+}
+function streakOf(checks, upto) {
+  let n = 0;
+  for (let d = upto; d >= 1; d--) {
+    const c = checks[d - 1];
+    if (c.eat && c.move && c.sleep) n++;
+    else if (d !== upto) break;
+  }
+  return n;
 }
 
 function renderPlan() {
-  const t = I18N[lang];
-  const plan = buildPlan30d(items, PROFILE);
-  const weeks = plan.weeks.map((w) => `
-    <div class="card"><h3>${lang === 'zh' ? `第 ${w.week} 周：${w.theme}` : `Week ${w.week}: ${w.theme}`}</h3>
-    <p>${esc(w.goal)}</p><ul>${w.tasks.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('');
-  document.getElementById('plan').innerHTML = `
-    <h2>${t.planTitle}</h2>
-    <p>${lang === 'zh' ? plan.headline : t.planHeadline}</p>
-    <div class="card"><h3>${lang === 'zh' ? '吃' : 'Eat'}</h3><ul>${plan.daily.eat.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
-    <div class="card"><h3>${lang === 'zh' ? '动' : 'Move'}</h3><ul>${plan.daily.move.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
-    <div class="card"><h3>${lang === 'zh' ? '睡' : 'Sleep'}</h3><ul>${plan.daily.sleep.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
-    ${weeks}
-    <div class="card"><h3>${lang === 'zh' ? '今日打卡' : 'Today'}</h3>
-      <div class="check">
-        <label><input type="checkbox"> ${lang === 'zh' ? '吃了' : 'Ate well'}</label>
-        <label><input type="checkbox"> ${lang === 'zh' ? '动了' : 'Moved'}</label>
-        <label><input type="checkbox"> ${lang === 'zh' ? '睡好了' : 'Slept well'}</label>
+  const u = t();
+  const plan = buildPlan30d(state.items, state.profile, state.lang);
+  const checks = getChecks();
+  const today = state.selectedDay || currentDay();
+  if (!state.week) state.week = Math.min(4, Math.floor((today - 1) / 7) + 1);
+  const week = plan.weeks[state.week - 1];
+  const c = checks[today - 1];
+  const cal = checks.map((x, i) => {
+    const full = x.eat && x.move && x.sleep;
+    return `<button type="button" class="day ${full ? 'full' : ''}" data-day="${i + 1}" style="${i + 1 === today ? 'outline:2px solid var(--brand);outline-offset:1px' : ''}">
+      ${i + 1}<span class="dots"><i class="${x.eat ? 'on' : ''}"></i><i class="${x.move ? 'on' : ''}"></i><i class="${x.sleep ? 'on' : ''}"></i></span></button>`;
+  }).join('');
+  $('#panel-plan').innerHTML = `
+    <p style="font-size:17px;margin:0">${esc(plan.headline)}</p>
+    <div class="focus">${plan.focus.map((f) => `<span>${esc(f)}</span>`).join('')}</div>
+    <div class="weeks">${plan.weeks.map((w) => `<button type="button" class="week ${w.week === state.week ? 'on' : ''}" data-week="${w.week}"><small>${u.weekN(w.week)}</small><b>${esc(w.theme)}</b><span>${esc(w.goal)}</span></button>`).join('')}</div>
+    <div class="plan-grid">
+      <div class="card today">
+        <h3>${u.today3} · ${u.weekN(week.week)}</h3>
+        <ul>${week.tasks.map((x, i) => `<li><i>${i + 1}</i><span>${esc(x)}</span></li>`).join('')}</ul>
+        ${plan.extras.length ? `<div class="extras">${plan.extras.map((x) => `<p>${esc(x)}</p>`).join('')}</div>` : ''}
       </div>
-      <p class="muted">${esc(plan.note)}</p>
-    </div>`;
+      <div class="card">
+        <div class="cal-head"><h3>${u.checkin} · <span class="muted">${u.dayN(today)}</span></h3><span class="streak">${u.streak(streakOf(checks, today))}</span></div>
+        <div class="check3">
+          <button type="button" data-k="eat" class="${c.eat ? 'on' : ''}">${u.eat}</button>
+          <button type="button" data-k="move" class="${c.move ? 'on' : ''}">${u.move}</button>
+          <button type="button" data-k="sleep" class="${c.sleep ? 'on' : ''}">${u.sleep}</button>
+        </div>
+        <div class="cal">${cal}</div>
+        <div class="legend"><span>${u.legend}</span><button class="link" id="resetChecks" type="button" style="margin-left:auto;font-size:12px">${u.reset}</button></div>
+      </div>
+    </div>
+    <div class="daily3">${['eat', 'move', 'sleep'].map((k) => `<div class="card"><h3>${u.daily[k]}</h3><ul>${plan.daily[k].map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}</div>
+    <p class="note">${esc(plan.note)}</p>`;
+
+  $$('#panel-plan .week').forEach((b) => { b.onclick = () => { state.week = +b.dataset.week; renderPlan(); }; });
+  $$('#panel-plan .day').forEach((b) => { b.onclick = () => { state.selectedDay = +b.dataset.day; state.week = Math.min(4, Math.floor((state.selectedDay - 1) / 7) + 1); renderPlan(); }; });
+  $$('#panel-plan .check3 button').forEach((b) => {
+    b.onclick = () => {
+      if (!store.get('start', null)) store.set('start', Date.now() - (today - 1) * 86400000);
+      const all = getChecks();
+      all[today - 1][b.dataset.k] = !all[today - 1][b.dataset.k];
+      store.set('checks', all);
+      renderPlan();
+    };
+  });
+  $('#resetChecks').onclick = () => { localStorage.removeItem('checkup-brief.checks'); localStorage.removeItem('checkup-brief.start'); state.selectedDay = null; renderPlan(); };
 }
 
-function renderStaticText() {
-  const t = I18N[lang];
-  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-  document.getElementById('tagline').textContent = t.tagline;
-  document.getElementById('lede').textContent = t.lede;
-  document.getElementById('disclaimer').innerHTML = `<strong>${t.disclaimer}</strong>`;
-  document.querySelectorAll('.tabs button').forEach((b, i) => { b.textContent = t.tabs[i]; });
-  document.querySelectorAll('.lang button').forEach((b) => b.classList.toggle('active', b.dataset.lang === lang));
+/* ---------- 分享长图（canvas 本地绘制，不上传） ---------- */
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function wrapText(ctx, text, maxW) {
+  const out = []; let line = '';
+  const tokens = state.lang === 'en' ? text.split(/(\s+)/) : [...text];
+  for (const ch of tokens) {
+    if (ctx.measureText(line + ch).width > maxW && line) { out.push(line.trim()); line = ch.trimStart(); } else line += ch;
+  }
+  if (line.trim()) out.push(line.trim());
+  return out;
+}
+function drawShare() {
+  const u = t();
+  const b = state.briefing;
+  const font = getComputedStyle(document.body).fontFamily;
+  const W = 1080; const P = 72;
+  const cv = document.createElement('canvas');
+  const ctx = cv.getContext('2d');
+  ctx.font = `34px ${font}`;
+  const rank = { high: 0, low: 0, 'borderline-high': 1, 'borderline-low': 1, unknown: 2 };
+  const flagged = b.items.filter((i) => i.status !== 'normal').sort((a, c) => rank[a.status] - rank[c.status]);
+  const summaryLines = wrapText(ctx, b.summary, W - P * 2 - 60);
+  const H = 800 + summaryLines.length * 52 + flagged.length * 96 + 200;
+  cv.width = W; cv.height = H;
+  const C = { paper: '#f6f4ee', card: '#ffffff', ink: '#17201f', muted: '#6c7572', line: '#e3dfd4', brand: '#0f3d3e', red: '#e0484d', yellow: '#e59a0b', green: '#2f9e6b' };
+  ctx.fillStyle = C.paper; ctx.fillRect(0, 0, W, H);
+  // 顶部条
+  ctx.fillStyle = C.brand; ctx.fillRect(0, 0, W, 150);
+  ctx.strokeStyle = C.paper; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(P, 80); ctx.lineTo(P + 26, 80); ctx.lineTo(P + 38, 52); ctx.lineTo(P + 58, 106); ctx.lineTo(P + 72, 72); ctx.lineTo(P + 100, 72); ctx.stroke();
+  ctx.fillStyle = C.paper; ctx.font = `bold 40px ${font}`; ctx.fillText(u.shareTitle, P + 128, 92);
+  // 分数卡
+  roundRect(ctx, P, 200, W - P * 2, 460 + summaryLines.length * 52, 36); ctx.fillStyle = C.card; ctx.fill();
+  const cx = W / 2; const cy = 380; const R = 120;
+  ctx.lineWidth = 26; ctx.strokeStyle = '#efece3'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = C[b.color]; ctx.beginPath(); ctx.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * b.score / 100); ctx.stroke();
+  ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.font = `800 110px ${font}`; ctx.fillText(String(b.score), cx, cy + 38);
+  ctx.font = `bold 36px ${font}`; ctx.fillStyle = C[b.color]; ctx.fillText(b.level, cx, cy + R + 76);
+  ctx.textAlign = 'left'; ctx.font = `34px ${font}`; ctx.fillStyle = C.muted;
+  summaryLines.forEach((l, i) => ctx.fillText(l, P + 30, cy + R + 150 + i * 52));
+  // 异常列表
+  let y = 200 + 460 + summaryLines.length * 52 + 70;
+  ctx.font = `bold 30px ${font}`; ctx.fillStyle = C.muted; ctx.fillText(`${u.shareAbn} · ${flagged.length}`, P, y);
+  y += 30;
+  flagged.forEach((i) => {
+    roundRect(ctx, P, y, W - P * 2, 80, 20); ctx.fillStyle = C.card; ctx.fill();
+    ctx.fillStyle = C[color(i.status)]; ctx.beginPath(); ctx.arc(P + 40, y + 40, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = C.ink; ctx.font = `600 34px ${font}`; ctx.fillText(nm(i), P + 70, y + 52);
+    ctx.textAlign = 'right'; ctx.font = `bold 34px ui-monospace, Menlo, monospace`;
+    ctx.fillText(`${i.value}`, W - P - 220, y + 52);
+    ctx.font = `600 28px ${font}`; ctx.fillStyle = C[color(i.status)]; ctx.fillText(u.status[i.status], W - P - 30, y + 52);
+    ctx.textAlign = 'left';
+    y += 96;
+  });
+  ctx.font = `30px ${font}`; ctx.fillStyle = C.muted; ctx.fillText(u.shareOk(b.counts.normal), P, y + 30);
+  ctx.textAlign = 'center'; ctx.font = `26px ${font}`;
+  ctx.fillText(`${u.shareFoot} · github.com/TTNAN/checkup-brief`, W / 2, H - 60);
+  return cv.toDataURL('image/png');
+}
+function openShare() {
+  const u = t();
+  const url = drawShare();
+  const m = document.createElement('div');
+  m.className = 'share-modal';
+  m.innerHTML = `<div class="box"><img alt="share" src="${url}"><a class="btn primary small" download="checkup-brief.png" href="${url}">${u.save}</a> <button class="btn ghost small" type="button">${u.close}</button></div>`;
+  m.onclick = (e) => { if (e.target === m || e.target.tagName === 'BUTTON') m.remove(); };
+  document.body.appendChild(m);
+  toast(u.savedImg);
 }
 
-function renderAll() {
-  renderStaticText();
-  renderBriefing();
+/* ---------- 主流程 ---------- */
+function readProfile() {
+  state.profile.age = parseInt($('#age').value, 10) || 32;
+  state.profile.sex = $('#sexSeg .on').dataset.sex;
+  state.profile.familyHistory = $$('#familyChips .on').map((b) => b.dataset.fam);
+  state.profile.budget = parseInt($('#budget').value, 10);
+}
+
+function renderAll(animate) {
+  if (!state.items.length) return;
+  const u = t();
+  const fromReport = state.items.filter((i) => i.range.source === 'report').length;
+  $('#parsedMeta').textContent = u.parsedMeta(state.items.length, fromReport);
+  renderBrief(animate);
   renderParser();
   renderPackage();
   renderClinic();
   renderPlan();
 }
 
-document.querySelectorAll('.tabs button').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tabs button').forEach((b) => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach((p) => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.panel).classList.add('active');
-  });
+function run(scroll = true) {
+  readProfile();
+  const btn = $('#runBtn');
+  btn.classList.add('busy');
+  setTimeout(() => {
+    state.items = parseReportText($('#reportText').value);
+    btn.classList.remove('busy');
+    if (!state.items.length) { toast(t().empty); return; }
+    $('#result').hidden = false;
+    showTab('brief');
+    renderAll(true);
+    if (scroll) $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 450);
+}
+
+function showTab(name) {
+  $$('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
+  $$('.panel').forEach((p) => p.classList.toggle('on', p.id === 'panel-' + name));
+  if (name === 'brief' && state.briefing) animateGauges($('#panel-brief'));
+}
+
+/* ---------- 事件 ---------- */
+$$('.nav .seg button').forEach((b) => {
+  b.onclick = () => { state.lang = b.dataset.lang; store.set('lang', state.lang); applyI18n(); renderAll(false); };
+});
+$$('#sexSeg button').forEach((b) => { b.onclick = () => { $$('#sexSeg button').forEach((x) => x.classList.toggle('on', x === b)); if (state.items.length) { readProfile(); renderAll(false); } }; });
+$$('#familyChips button').forEach((b) => { b.onclick = () => { b.classList.toggle('on'); if (state.items.length) { readProfile(); renderAll(false); } }; });
+$('#budget').oninput = (e) => { $('#budgetVal').textContent = '¥' + e.target.value; if (state.items.length) { readProfile(); renderPackage(); } };
+$('#age').onchange = () => { if (state.items.length) { readProfile(); renderAll(false); } };
+$('#reportText').oninput = updateLineCount;
+$('#loadSample').onclick = () => { $('#reportText').value = SAMPLE_TEXT; updateLineCount(); };
+$('#clearText').onclick = () => { $('#reportText').value = ''; updateLineCount(); };
+$('#runBtn').onclick = () => run();
+$('#ctaSample').onclick = () => { $('#reportText').value = SAMPLE_TEXT; updateLineCount(); run(); };
+$$('#tabs button').forEach((b) => { b.onclick = () => showTab(b.dataset.tab); });
+
+const dz = $('#dropZone');
+['dragenter', 'dragover'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', (e) => {
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { $('#reportText').value = r.result; updateLineCount(); };
+  r.readAsText(f);
 });
 
-document.querySelectorAll('.lang button').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    lang = btn.dataset.lang;
-    renderAll();
-  });
-});
+/* Hero 小卡片的分数环 */
+animateRing($('#heroRingBar'), $('#heroScore'), 68, 314.16);
 
-renderAll();
+applyI18n();
+// 链接里带 #demo 时直接载入示例，方便分享演示。
+if (location.hash === '#demo') { $('#reportText').value = SAMPLE_TEXT; updateLineCount(); run(false); }

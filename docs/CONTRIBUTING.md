@@ -9,11 +9,11 @@
 ```bash
 git clone https://github.com/TTNAN/checkup-brief.git
 cd checkup-brief
-node --check src/*.js
-# 双击打开 web/index.html，看演示页是否正常
+npm test            # 零依赖单元测试
+python3 -m http.server 8000   # 打开 http://localhost:8000 看演示页
 ```
 
-本仓库没有构建步骤，没有依赖，不需要 `npm install`。
+本仓库没有构建步骤，没有依赖，不需要 `npm install`（`npm test` 只是 `node --test tests/*.test.js` 的别名）。
 
 ## 提交信息
 
@@ -24,14 +24,15 @@ node --check src/*.js
 1. **不要提交真实体检报告**：不要贴姓名、身份证号、电话、医院、就诊号，不要把真实报告放进 Issue、PR、截图、测试用例。只用 `examples/` 里的脱敏示例数据，或自己编的、明显是示例的数字。
 2. **不要加诊断和用药建议**：讲解只写科普，不写“你得了××病”“吃××药”。涉及用药、停药、复查间隔，一律写“找医生”。
 3. **参考范围要注明来源**：新增或修改参考范围时，在 PR 里写清楚来源（例如某医院报告单、某指南），不要凭印象写。
-4. **保持克制**：演示页不用外部字体、图片、CDN；样式保持留白，不堆效果。
+4. **保持零依赖**：演示页不用外部字体、图片、CDN，断网也要能打开。
 
 ## PR 流程
 
 1. Fork 仓库，建一个分支。
-2. 改代码时顺手跑 `node --check src/*.js`，确认没有语法错误。
-3. 改了解析或计分逻辑，请同步更新 `examples/sample-report.json` 和 `examples/sample-brief.md` 里对应的数字，保持全仓库示例一致（32 岁男性，总分 68 分）。
-4. 提交 PR，标题写清楚改了什么，例如“补 5 个甲状腺指标别名”。
+2. 改代码后跑 `npm test`；改解析器请顺手在 `tests/core.test.js` 里补一条用例。
+3. 改了解析、计分或文案，运行 `npm run example` 重新生成 `examples/` 下的示例（CI 会检查它们和代码是否一致；示例总分应保持 68）。
+4. 改了界面，可以用 `scripts/` 里的脚本重新生成 README 截图和动图（见 `docs/assets/README.md`）。
+5. 提交 PR，标题写清楚改了什么，例如“补 5 个甲状腺指标别名”。
 
 ## 报告 Bug
 

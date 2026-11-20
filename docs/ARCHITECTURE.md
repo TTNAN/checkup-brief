@@ -7,7 +7,8 @@
 1. **本地优先**：解析、计分、推荐全部是纯函数，在浏览器或 Node 本地跑，不依赖服务器、不调用任何外部 API。
 2. **判定与讲解分离**：参考范围判定是确定性的（数值对照区间），大模型 / 人话讲解只负责“怎么说”，不负责“记范围”。这样即使换讲解方式，红黄绿的判定也不会变。
 3. **可解释**：计分规则、参考范围、别名表全部公开写在代码里，任何人都能复算。
-4. **克制**：演示页不用外部字体、图片、CDN，离线能打开；样式只用黑白灰加三盏灯。
+4. **零依赖、离线可用**：演示页不用外部字体、图片、CDN；所有动画都是 CSS + 原生 JS。
+5. **中英同源**：每个模块都接受 `lang` 参数（`'zh'` / `'en'`），文案和逻辑在同一个文件里，不会两边对不上。
 
 ## 数据流
 
@@ -17,11 +18,12 @@
   → src/parser.js       parseReportText(text)
   → 结构化指标数组 [{ id, name, value, unit, range, status }]
   → src/reference-ranges.js  对照参考范围（报告单优先，内置兜底）
-  → src/briefing.js     buildBriefing() → 总分 + 人话讲解
-  → src/package-recommender.js  recommendPackage() → 下次加查 / 可省
-  → src/clinic-guide.js       buildClinicGuide() → 科室 / 带什么 / 问什么
-  → src/plan-30d.js           buildPlan30d() → 30 天吃 / 动 / 睡
-  → web/index.html      五个模块展示；或 examples/sample-brief.md
+  → ① src/briefing.js            buildBriefing() → 总分 + 人话讲解
+  → ③ src/package-recommender.js recommendPackage() → 下次加查 / 可选 / 可省
+  → ④ src/clinic-guide.js        buildClinicGuide() → 科室 / 带什么 / 问什么
+  → ⑤ src/plan-30d.js            buildPlan30d() → 30 天吃 / 动 / 睡
+  → web/index.html  五个模块展示（② 解析结果即上面的结构化数组）
+  → src/markdown.js + bin/checkup-brief.js  命令行生成 examples/sample-brief.md
 ```
 
 ## 模块说明
@@ -29,13 +31,15 @@
 | 文件 | 职责 | 是否纯函数 |
 | --- | --- | --- |
 | `src/reference-ranges.js` | 成人常见指标参考范围 | 数据表 |
-| `src/aliases.js` | 30 个指标的中文别名归一表 | 数据表 |
+| `src/aliases.js` | 30 个指标、120+ 种写法的别名归一表 | 数据表 |
 | `src/parser.js` | 文本 → 结构化指标 + 红黄绿判定 | 是 |
 | `src/briefing.js` | 计分 + 人话讲解 | 是 |
 | `src/package-recommender.js` | 下次体检加查 / 可选 / 可省 | 是 |
 | `src/clinic-guide.js` | 挂号科室 + 问诊清单 | 是 |
 | `src/plan-30d.js` | 30 天改善计划 + 打卡表 | 是 |
-| `web/app.js` | 演示页交互、中 / EN 切换 | 否（DOM） |
+| `src/markdown.js` | 拼出整份 Markdown 简报 | 是 |
+| `bin/checkup-brief.js` | 命令行 | 否（读文件） |
+| `web/app.js` | 演示页交互、中 / EN、分享长图、打卡 | 否（DOM） |
 
 ## 计分规则
 

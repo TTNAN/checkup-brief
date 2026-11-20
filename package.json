@@ -1,0 +1,19 @@
+{
+  "name": "checkup-brief",
+  "version": "0.2.0",
+  "description": "把体检报告，变成一页能看懂的人话简报。Turn your checkup report into a one-page brief you can actually understand.",
+  "license": "MIT",
+  "author": "TTNAN",
+  "repository": { "type": "git", "url": "https://github.com/TTNAN/checkup-brief.git" },
+  "homepage": "https://ttnan.github.io/checkup-brief/",
+  "bin": { "checkup-brief": "bin/checkup-brief.js" },
+  "main": "src/markdown.js",
+  "files": ["bin", "src", "web", "examples"],
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "demo": "python3 -m http.server 8000",
+    "example": "node bin/checkup-brief.js examples/sample-report.txt --age 32 --sex male --budget 1500 > examples/sample-brief.md && node bin/checkup-brief.js examples/sample-report.txt --json > examples/sample-report.json"
+  },
+  "engines": { "node": ">=18" },
+  "keywords": ["health", "checkup", "medical-report", "parser", "chinese", "体检", "体检报告"]
+}

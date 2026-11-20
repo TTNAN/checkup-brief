@@ -1,7 +1,6 @@
 # checkup-brief — CI
 # 只做健康科普，不做诊断，不能替代医生。
-# 每次 push / PR 时跑：语法检查 + 示例数据回归测试。
-# 不需要任何外部服务，不需要密钥，不上传数据。
+# 每次 push / PR：语法检查 + 单元测试 + 示例文件是否和代码一致 + 不许提交真实报告。
 name: CI
 
 on:
@@ -13,54 +12,31 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ matrix.node }}
 
-      - name: Syntax check (all src + web js)
-        run: |
-          node --check src/reference-ranges.js
-          node --check src/aliases.js
-          node --check src/parser.js
-          node --check src/briefing.js
-          node --check src/package-recommender.js
-          node --check src/clinic-guide.js
-          node --check src/plan-30d.js
-          node --check web/app.js
+      - name: Syntax check
+        run: for f in src/*.js web/app.js bin/*.js; do node --check "$f"; done
 
-      - name: Sample regression test (score must be 68)
-        run: |
-          node -e "
-            const fs = require('fs');
-            const { parseReportText } = require('./src/parser.js');
-            const { buildBriefing } = require('./src/briefing.js');
-            const { recommendPackage } = require('./src/package-recommender.js');
-            const { buildClinicGuide } = require('./src/clinic-guide.js');
-            const { buildPlan30d } = require('./src/plan-30d.js');
-            const text = fs.readFileSync('examples/sample-report.txt', 'utf8');
-            const items = parseReportText(text);
-            if (items.length < 10) throw new Error('parsed too few items: ' + items.length);
-            const briefing = buildBriefing(items, { age: 32, sex: 'male' });
-            if (briefing.score !== 68) throw new Error('expected score 68, got ' + briefing.score);
-            if (briefing.counts.abnormal !== 4) throw new Error('expected 4 abnormal, got ' + briefing.counts.abnormal);
-            const pkg = recommendPackage({ profile: { age: 32, sex: 'male' }, items, budget: 1500 });
-            if (pkg.add.length === 0) throw new Error('package recommender returned no add-ons');
-            const guides = buildClinicGuide(items);
-            if (guides.length === 0) throw new Error('clinic guide returned nothing');
-            const plan = buildPlan30d(items, { age: 32, sex: 'male' });
-            if (plan.weeks.length !== 4 || plan.checklist.length !== 30) throw new Error('30-day plan is incomplete');
-            console.log('OK: parsed ' + items.length + ' items, score ' + briefing.score);
-          "
+      - name: Unit tests
+        run: node --test tests/*.test.js
 
-      - name: Check no real report files are tracked
+      - name: Examples are up to date
         run: |
-          if git ls-files | grep -Ei '(体检|报告|report).*\.(pdf|png|jpg|jpeg)$'; then
+          node bin/checkup-brief.js examples/sample-report.txt --age 32 --sex male --budget 1500 > /tmp/brief.md
+          node bin/checkup-brief.js examples/sample-report.txt --json > /tmp/report.json
+          diff -u examples/sample-brief.md /tmp/brief.md
+          diff -u examples/sample-report.json /tmp/report.json
+
+      - name: No real report files tracked
+        run: |
+          if git ls-files | grep -Ei '(体检|报告|report).*\.(pdf|png|jpg|jpeg|heic)$'; then
             echo 'Real report files must not be tracked. Use examples/ sample data only.'
             exit 1
           fi
-          echo 'OK: no report files tracked'

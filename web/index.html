@@ -2,52 +2,147 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>checkup-brief — 把体检报告翻译成人话</title>
-<meta name="description" content="把体检报告翻译成人话：一页纸简报、解析器、套餐推荐、挂号清单、30 天计划。只做健康科普，不做诊断，不能替代医生。">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>checkup-brief · 体检单，翻译成人话</title>
+<meta name="description" content="把体检报告粘贴进来，得到一页纸人话简报：总分、红黄绿灯、逐项讲解、下次查什么、挂什么科、30 天怎么改。纯本地处理，不上传。只做健康科普，不做诊断。">
+<meta name="theme-color" content="#0f3d3e">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f3d3e'/%3E%3Cpath d='M12 34h10l5-12 8 22 6-14h11' fill='none' stroke='%23f6f4ee' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="wrap">
 
-  <header class="topbar">
-    <div class="brand">checkup-brief<small>CHECKUP BRIEF · 一页纸人话简报</small></div>
-    <div class="lang" role="group" aria-label="语言 / Language">
-      <button type="button" data-lang="zh" class="active">中文</button>
-      <button type="button" data-lang="en">EN</button>
+<header class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#top" aria-label="checkup-brief">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16"/><path d="M12 34h10l5-12 8 22 6-14h11"/></svg>
+      <span>checkup-brief</span>
+    </a>
+    <div class="nav-right">
+      <span class="pill-local" data-i18n="localBadge">100% 本地处理 · 不上传</span>
+      <div class="seg" role="group" aria-label="语言 / Language">
+        <button type="button" data-lang="zh" class="on">中</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+      <a class="gh" href="https://github.com/TTNAN/checkup-brief" target="_blank" rel="noopener" aria-label="GitHub">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
     </div>
-  </header>
+  </div>
+</header>
 
-  <div class="disclaimer" id="disclaimer"><strong>只做健康科普，不做诊断，不能替代医生。</strong></div>
+<main id="top">
 
-  <h1 id="tagline">把体检报告，翻译成人话。</h1>
-  <p class="lede" id="lede">粘贴体检报告，得到一页纸人话简报：总分、红黄绿灯、每项异常讲清楚，下次查什么、挂什么科、30 天怎么改，都在同一页里。</p>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow" data-i18n="eyebrow">CHECKUP BRIEF · 一页纸人话简报</p>
+      <h1 data-i18n-html="title">体检单看不懂？<br><em>一页纸</em>，翻译成人话。</h1>
+      <p class="lede" data-i18n="lede">粘贴体检报告，几秒钟得到：总分和红黄绿灯、每项异常一句人话、下次该查什么、该挂哪个科、接下来 30 天怎么改。</p>
+      <div class="hero-cta">
+        <button class="btn primary" id="ctaSample" type="button" data-i18n="ctaSample">用示例报告试一下</button>
+        <a class="btn ghost" href="#input" data-i18n="ctaMine">粘贴我的报告</a>
+      </div>
+      <ul class="hero-points">
+        <li data-i18n="point1">30+ 指标别名自动识别</li>
+        <li data-i18n="point2">优先用报告单上的参考范围</li>
+        <li data-i18n="point3">零依赖，断网也能用</li>
+      </ul>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="paper paper-back">
+        <div class="paper-line w60"></div><div class="paper-line w80"></div><div class="paper-line w40"></div>
+        <div class="paper-line w70"></div><div class="paper-line w50"></div><div class="paper-line w80"></div>
+        <div class="paper-line w30"></div><div class="paper-line w60"></div>
+      </div>
+      <div class="paper paper-front">
+        <div class="mini-ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" class="track"/><circle cx="60" cy="60" r="50" class="bar" id="heroRingBar"/></svg><b id="heroScore">68</b></div>
+        <div class="mini-lights"><span class="l red"></span><span class="l yellow"></span><span class="l green"></span></div>
+        <div class="mini-row"><i class="red"></i><span data-i18n="miniTc">总胆固醇</span><em>6.12</em></div>
+        <div class="mini-row"><i class="red"></i><span data-i18n="miniUa">尿酸</span><em>452</em></div>
+        <div class="mini-row"><i class="yellow"></i><span data-i18n="miniFpg">空腹血糖</span><em>5.9</em></div>
+        <div class="mini-row"><i class="green"></i><span data-i18n="miniHb">血红蛋白</span><em>152</em></div>
+      </div>
+    </div>
+  </section>
 
-  <p class="muted">示例数据，已脱敏：32 岁男性，体检日期 2026-11-10。总分 68 分。数据只在你的浏览器里处理，不上传。</p>
+  <p class="disclaimer" data-i18n="disclaimer">只做健康科普，不做诊断，不能替代医生。一切以报告单上的参考范围和医生解释为准。</p>
 
-  <nav class="tabs" aria-label="模块">
-    <button type="button" data-panel="briefing" class="active">一页纸简报</button>
-    <button type="button" data-panel="parser">解析器</button>
-    <button type="button" data-panel="package">套餐推荐</button>
-    <button type="button" data-panel="clinic">挂号清单</button>
-    <button type="button" data-panel="plan">30 天计划</button>
-  </nav>
+  <!-- Input -->
+  <section class="block" id="input">
+    <div class="block-head">
+      <span class="step">01</span>
+      <div>
+        <h2 data-i18n="inputTitle">把报告粘贴进来</h2>
+        <p class="muted" data-i18n="inputHint">支持直接复制的文字、OCR 识别结果、PDF 里复制出来的文本，也可以把 .txt 文件拖进来。</p>
+      </div>
+    </div>
+    <div class="input-grid">
+      <div class="card paste" id="dropZone">
+        <textarea id="reportText" spellcheck="false" data-i18n-ph="placeholder" placeholder="例如：&#10;总胆固醇(TC) 6.12 mmol/L 参考范围 <5.2&#10;尿酸(UA) 452 umol/L 参考范围 208-428&#10;血压 132/84 mmHg"></textarea>
+        <div class="paste-bar">
+          <button class="link" type="button" id="loadSample" data-i18n="loadSample">载入示例（已脱敏）</button>
+          <button class="link" type="button" id="clearText" data-i18n="clear">清空</button>
+          <span class="muted" id="lineCount"></span>
+        </div>
+      </div>
+      <div class="card profile">
+        <h3 data-i18n="profileTitle">关于你</h3>
+        <p class="muted small" data-i18n="profileHint">用于套餐推荐和 30 天计划，只在本地使用。</p>
+        <label class="field"><span data-i18n="age">年龄</span>
+          <input type="number" id="age" min="18" max="100" value="32"></label>
+        <div class="field"><span data-i18n="sex">性别</span>
+          <div class="seg wide" id="sexSeg">
+            <button type="button" data-sex="male" class="on" data-i18n="male">男</button>
+            <button type="button" data-sex="female" data-i18n="female">女</button>
+          </div>
+        </div>
+        <div class="field"><span data-i18n="family">家族史</span>
+          <div class="chips" id="familyChips">
+            <button type="button" data-fam="糖尿病" data-i18n="famDiabetes">糖尿病</button>
+            <button type="button" data-fam="心血管" data-i18n="famCardio">心血管病</button>
+            <button type="button" data-fam="肿瘤" data-i18n="famCancer">肿瘤</button>
+          </div>
+        </div>
+        <label class="field"><span><span data-i18n="budget">下次体检预算</span> <b id="budgetVal">¥1500</b></span>
+          <input type="range" id="budget" min="300" max="5000" step="100" value="1500"></label>
+        <button class="btn primary block-btn" id="runBtn" type="button"><span data-i18n="run">生成我的简报</span><i class="spinner"></i></button>
+      </div>
+    </div>
+  </section>
 
-  <main>
-    <section class="panel active" id="briefing" aria-label="一页纸简报"></section>
-    <section class="panel" id="parser" aria-label="解析器"></section>
-    <section class="panel" id="package" aria-label="套餐推荐"></section>
-    <section class="panel" id="clinic" aria-label="挂号清单"></section>
-    <section class="panel" id="plan" aria-label="30 天计划"></section>
-  </main>
+  <!-- Result -->
+  <section class="block result" id="result" hidden>
+    <div class="block-head">
+      <span class="step">02</span>
+      <div>
+        <h2 data-i18n="resultTitle">你的一页纸简报</h2>
+        <p class="muted" id="parsedMeta"></p>
+      </div>
+    </div>
 
-  <footer>
-    <p>checkup-brief · MIT License · 作者 TTNAN</p>
-    <p>只做健康科普，不做诊断，不能替代医生。参考范围以你报告单上印的为准。本页不收集、不上传任何数据；请勿粘贴真实体检报告到公开场合。</p>
-    <p><a href="../README.md">README（中文）</a> · <a href="../README_EN.md">README (English)</a> · <a href="../examples/sample-brief.md">示例简报 Markdown</a></p>
-  </footer>
+    <nav class="tabs" id="tabs" aria-label="modules">
+      <button type="button" data-tab="brief" class="on"><b>1</b><span data-i18n="tab1">一页纸简报</span></button>
+      <button type="button" data-tab="parser"><b>2</b><span data-i18n="tab2">解析结果</span></button>
+      <button type="button" data-tab="package"><b>3</b><span data-i18n="tab3">下次查什么</span></button>
+      <button type="button" data-tab="clinic"><b>4</b><span data-i18n="tab4">挂号清单</span></button>
+      <button type="button" data-tab="plan"><b>5</b><span data-i18n="tab5">30 天计划</span></button>
+    </nav>
 
-</div>
+    <div class="panel on" id="panel-brief"></div>
+    <div class="panel" id="panel-parser"></div>
+    <div class="panel" id="panel-package"></div>
+    <div class="panel" id="panel-clinic"></div>
+    <div class="panel" id="panel-plan"></div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p data-i18n="footer1">checkup-brief · MIT License · 作者 TTNAN</p>
+  <p class="muted small" data-i18n="footer2">只做健康科普，不做诊断，不能替代医生。本页没有统计、没有第三方请求，你粘贴的内容不会离开这台设备；30 天打卡只存在本机浏览器里。</p>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="../src/reference-ranges.js"></script>
 <script src="../src/aliases.js"></script>

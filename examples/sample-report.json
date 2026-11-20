@@ -1,268 +1,306 @@
-{
-  "profile": {
-    "age": 32,
-    "sex": "male",
-    "note": "示例数据，已脱敏"
+[
+  {
+    "id": "tc",
+    "group": "lipids",
+    "name": "总胆固醇",
+    "en": "Total cholesterol",
+    "value": 6.12,
+    "unit": "mmol/L",
+    "range": {
+      "low": null,
+      "high": 5.2,
+      "source": "report"
+    },
+    "status": "high",
+    "flag": null,
+    "note": "5.2–6.2 为边缘升高，≥6.2 为升高"
   },
-  "disclaimer": "只做健康科普，不做诊断，不能替代医生。",
-  "items": [
-    {
-      "id": "tc",
-      "name": "总胆固醇",
-      "value": 6.12,
-      "unit": "mmol/L",
-      "range": {
-        "low": null,
-        "high": 5.2,
-        "source": "report"
-      },
-      "status": "high",
-      "note": "5.2–6.2 为边缘升高，≥6.2 为升高"
+  {
+    "id": "tg",
+    "group": "lipids",
+    "name": "甘油三酯",
+    "en": "Triglycerides",
+    "value": 2.48,
+    "unit": "mmol/L",
+    "range": {
+      "low": null,
+      "high": 1.7,
+      "source": "report"
     },
-    {
-      "id": "tg",
-      "name": "甘油三酯",
-      "value": 2.48,
-      "unit": "mmol/L",
-      "range": {
-        "low": null,
-        "high": 1.7,
-        "source": "report"
-      },
-      "status": "high",
-      "note": "1.7–2.3 为边缘升高，≥2.3 为升高"
+    "status": "high",
+    "flag": null,
+    "note": "1.7–2.3 为边缘升高，≥2.3 为升高"
+  },
+  {
+    "id": "hdl",
+    "group": "lipids",
+    "name": "高密度脂蛋白胆固醇",
+    "en": "HDL cholesterol",
+    "value": 1.12,
+    "unit": "mmol/L",
+    "range": {
+      "low": 1,
+      "high": null,
+      "source": "report"
     },
-    {
-      "id": "hdl",
-      "name": "高密度脂蛋白胆固醇",
-      "value": 1.12,
-      "unit": "mmol/L",
-      "range": {
-        "low": 1,
-        "high": null,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": "男性 ≥1.0，女性 ≥1.3 为宜；偏低是风险因素"
+    "status": "normal",
+    "flag": null,
+    "note": "男性 ≥1.0，女性 ≥1.3 为宜；偏低是风险因素"
+  },
+  {
+    "id": "fpg",
+    "group": "glucose",
+    "name": "空腹血糖",
+    "en": "Fasting glucose",
+    "value": 5.9,
+    "unit": "mmol/L",
+    "range": {
+      "low": 3.9,
+      "high": 6.1,
+      "source": "report"
     },
-    {
-      "id": "fpg",
-      "name": "空腹血糖",
-      "value": 5.9,
-      "unit": "mmol/L",
-      "range": {
-        "low": 3.9,
-        "high": 6.1,
-        "source": "report"
-      },
-      "status": "borderline-high",
-      "note": "6.1–7.0 为空腹血糖受损区间，需复查"
+    "status": "borderline-high",
+    "flag": null,
+    "note": "6.1–7.0 为空腹血糖受损区间，需复查"
+  },
+  {
+    "id": "hba1c",
+    "group": "glucose",
+    "name": "糖化血红蛋白",
+    "en": "HbA1c",
+    "value": 5.6,
+    "unit": "%",
+    "range": {
+      "low": 4,
+      "high": 6,
+      "source": "report"
     },
-    {
-      "id": "hba1c",
-      "name": "糖化血红蛋白",
-      "value": 5.6,
-      "unit": "%",
-      "range": {
-        "low": 4,
-        "high": 6,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": "反映近 2–3 个月平均血糖"
+    "status": "normal",
+    "flag": null,
+    "note": "反映近 2–3 个月平均血糖"
+  },
+  {
+    "id": "alt",
+    "group": "liver",
+    "name": "谷丙转氨酶",
+    "en": "ALT",
+    "value": 52,
+    "unit": "U/L",
+    "range": {
+      "low": 9,
+      "high": 50,
+      "source": "report"
     },
-    {
-      "id": "alt",
-      "name": "谷丙转氨酶",
-      "value": 52,
-      "unit": "U/L",
-      "range": {
-        "low": 9,
-        "high": 50,
-        "source": "report"
-      },
-      "status": "high",
-      "note": "轻度升高常见于脂肪肝、饮酒、熬夜、药物影响"
+    "status": "high",
+    "flag": null,
+    "note": "轻度升高常见于脂肪肝、饮酒、熬夜、药物影响"
+  },
+  {
+    "id": "ast",
+    "group": "liver",
+    "name": "谷草转氨酶",
+    "en": "AST",
+    "value": 31,
+    "unit": "U/L",
+    "range": {
+      "low": 15,
+      "high": 40,
+      "source": "report"
     },
-    {
-      "id": "ast",
-      "name": "谷草转氨酶",
-      "value": 31,
-      "unit": "U/L",
-      "range": {
-        "low": 15,
-        "high": 40,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": ""
+    "status": "normal",
+    "flag": null,
+    "note": ""
+  },
+  {
+    "id": "ggt",
+    "group": "liver",
+    "name": "谷氨酰转肽酶",
+    "en": "GGT",
+    "value": 38,
+    "unit": "U/L",
+    "range": {
+      "low": 10,
+      "high": 60,
+      "source": "report"
     },
-    {
-      "id": "ggt",
-      "name": "谷氨酰转肽酶",
-      "value": 38,
-      "unit": "U/L",
-      "range": {
-        "low": 10,
-        "high": 60,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": "男性区间；饮酒后常升高"
+    "status": "normal",
+    "flag": null,
+    "note": "男性区间；饮酒后常升高"
+  },
+  {
+    "id": "tbil",
+    "group": "liver",
+    "name": "总胆红素",
+    "en": "Total bilirubin",
+    "value": 14.2,
+    "unit": "umol/L",
+    "range": {
+      "low": 0,
+      "high": 23,
+      "source": "report"
     },
-    {
-      "id": "tbil",
-      "name": "总胆红素",
-      "value": 14.2,
-      "unit": "umol/L",
-      "range": {
-        "low": 0,
-        "high": 23,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": ""
+    "status": "normal",
+    "flag": null,
+    "note": ""
+  },
+  {
+    "id": "crea",
+    "group": "kidney",
+    "name": "肌酐",
+    "en": "Creatinine",
+    "value": 82,
+    "unit": "umol/L",
+    "range": {
+      "low": 57,
+      "high": 97,
+      "source": "report"
     },
-    {
-      "id": "crea",
-      "name": "肌酐",
-      "value": 82,
-      "unit": "umol/L",
-      "range": {
-        "low": 57,
-        "high": 97,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": "男性区间；女性为 41–73；受肌肉量影响"
+    "status": "normal",
+    "flag": null,
+    "note": "男性区间；女性为 41–73；受肌肉量影响"
+  },
+  {
+    "id": "bun",
+    "group": "kidney",
+    "name": "尿素氮",
+    "en": "Urea nitrogen",
+    "value": 5.2,
+    "unit": "mmol/L",
+    "range": {
+      "low": 3.1,
+      "high": 8,
+      "source": "report"
     },
-    {
-      "id": "bun",
-      "name": "尿素氮",
-      "value": 5.2,
-      "unit": "mmol/L",
-      "range": {
-        "low": 3.1,
-        "high": 8,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": "高蛋白饮食、脱水时可升高"
+    "status": "normal",
+    "flag": null,
+    "note": "高蛋白饮食、脱水时可升高"
+  },
+  {
+    "id": "ua",
+    "group": "kidney",
+    "name": "尿酸",
+    "en": "Uric acid",
+    "value": 452,
+    "unit": "umol/L",
+    "range": {
+      "low": 208,
+      "high": 428,
+      "source": "report"
     },
-    {
-      "id": "ua",
-      "name": "尿酸",
-      "value": 452,
-      "unit": "umol/L",
-      "range": {
-        "low": 208,
-        "high": 428,
-        "source": "report"
-      },
-      "status": "high",
-      "note": "男性区间；女性为 155–357；≥420 需关注"
+    "status": "high",
+    "flag": null,
+    "note": "男性区间；女性为 155–357；≥420 需关注"
+  },
+  {
+    "id": "tsh",
+    "group": "thyroid",
+    "name": "促甲状腺激素",
+    "en": "TSH",
+    "value": 2.1,
+    "unit": "mIU/L",
+    "range": {
+      "low": 0.27,
+      "high": 4.2,
+      "source": "report"
     },
-    {
-      "id": "tsh",
-      "name": "促甲状腺激素",
-      "value": 2.1,
-      "unit": "mIU/L",
-      "range": {
-        "low": 0.27,
-        "high": 4.2,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": ""
+    "status": "normal",
+    "flag": null,
+    "note": ""
+  },
+  {
+    "id": "ft4",
+    "group": "thyroid",
+    "name": "游离甲状腺素",
+    "en": "Free T4",
+    "value": 16.5,
+    "unit": "pmol/L",
+    "range": {
+      "low": 12,
+      "high": 22,
+      "source": "report"
     },
-    {
-      "id": "ft4",
-      "name": "游离甲状腺素",
-      "value": 16.5,
-      "unit": "pmol/L",
-      "range": {
-        "low": 12,
-        "high": 22,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": ""
+    "status": "normal",
+    "flag": null,
+    "note": ""
+  },
+  {
+    "id": "wbc",
+    "group": "blood",
+    "name": "白细胞计数",
+    "en": "White blood cells",
+    "value": 6.2,
+    "unit": "10^9/L",
+    "range": {
+      "low": 3.5,
+      "high": 9.5,
+      "source": "report"
     },
-    {
-      "id": "wbc",
-      "name": "白细胞计数",
-      "value": 6.2,
-      "unit": "10^9/L",
-      "range": {
-        "low": 3.5,
-        "high": 9.5,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": "感染、炎症时常升高"
+    "status": "normal",
+    "flag": null,
+    "note": "感染、炎症时常升高"
+  },
+  {
+    "id": "hb",
+    "group": "blood",
+    "name": "血红蛋白",
+    "en": "Hemoglobin",
+    "value": 152,
+    "unit": "g/L",
+    "range": {
+      "low": 130,
+      "high": 175,
+      "source": "report"
     },
-    {
-      "id": "hb",
-      "name": "血红蛋白",
-      "value": 152,
-      "unit": "g/L",
-      "range": {
-        "low": 130,
-        "high": 175,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": "男性区间；女性为 115–150"
+    "status": "normal",
+    "flag": null,
+    "note": "男性区间；女性为 115–150"
+  },
+  {
+    "id": "plt",
+    "group": "blood",
+    "name": "血小板计数",
+    "en": "Platelets",
+    "value": 238,
+    "unit": "10^9/L",
+    "range": {
+      "low": 125,
+      "high": 350,
+      "source": "report"
     },
-    {
-      "id": "plt",
-      "name": "血小板计数",
-      "value": 238,
-      "unit": "10^9/L",
-      "range": {
-        "low": 125,
-        "high": 350,
-        "source": "report"
-      },
-      "status": "normal",
-      "note": ""
+    "status": "normal",
+    "flag": null,
+    "note": ""
+  },
+  {
+    "id": "sbp",
+    "group": "vitals",
+    "name": "收缩压",
+    "en": "Systolic BP",
+    "value": 132,
+    "unit": "mmHg",
+    "range": {
+      "low": 90,
+      "high": 140,
+      "source": "builtin"
     },
-    {
-      "id": "sbp",
-      "name": "收缩压",
-      "value": 132,
-      "unit": "mmHg",
-      "range": {
-        "low": 90,
-        "high": 140,
-        "source": "builtin"
-      },
-      "status": "borderline-high",
-      "note": "120–139 为正常高值；≥140 需就医评估"
+    "status": "borderline-high",
+    "flag": null,
+    "note": "120–139 为正常高值；≥140 需就医评估"
+  },
+  {
+    "id": "dbp",
+    "group": "vitals",
+    "name": "舒张压",
+    "en": "Diastolic BP",
+    "value": 84,
+    "unit": "mmHg",
+    "range": {
+      "low": 60,
+      "high": 90,
+      "source": "builtin"
     },
-    {
-      "id": "dbp",
-      "name": "舒张压",
-      "value": 84,
-      "unit": "mmHg",
-      "range": {
-        "low": 60,
-        "high": 90,
-        "source": "builtin"
-      },
-      "status": "borderline-high",
-      "note": "80–89 为正常高值；≥90 需就医评估"
-    }
-  ],
-  "briefing": {
-    "score": 68,
-    "level": "有几项要注意",
-    "summary": "32 岁男性，有 4 项超出参考范围（总胆固醇、甘油三酯、谷丙转氨酶、尿酸），另有 3 项在正常范围里偏高。先别紧张，多数和饮食、运动、睡眠、饮酒有关，重点是复查确认趋势，并带报告找医生聊聊。",
-    "counts": {
-      "total": 19,
-      "abnormal": 4,
-      "borderline": 3,
-      "normal": 12
-    }
+    "status": "borderline-high",
+    "flag": null,
+    "note": "80–89 为正常高值；≥90 需就医评估"
   }
-}
+]
