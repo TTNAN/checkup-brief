@@ -197,7 +197,6 @@ checkup-brief/
 ├── web/                 演示页（index.html / styles.css / app.js）
 │   ├── import.js            PDF / 图片 / 文本导入（本地）
 │   ├── vendor/              pdf.js、tesseract.js 及中文模型（按需加载）
-│   └── fonts/               思源宋体子集（标题用）
 ├── src/
 │   ├── parser.js            解析 + 判定
 │   ├── aliases.js           指标别名表

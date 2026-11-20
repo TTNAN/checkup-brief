@@ -32,8 +32,8 @@ def demo(pg):
     for tab in ['package', 'clinic', 'plan']:
         pg.click(f'#tabs button[data-tab={tab}]'); pg.wait_for_timeout(1900)
     pg.click('#tabs button[data-tab=brief]'); pg.wait_for_timeout(700)
-    pg.click('.lang button[data-lang=en]'); pg.wait_for_timeout(2000)
-    pg.click('.lang button[data-lang=zh]'); pg.wait_for_timeout(900)
+    pg.click('.nav .seg button[data-lang=en]'); pg.wait_for_timeout(2000)
+    pg.click('.nav .seg button[data-lang=zh]'); pg.wait_for_timeout(900)
 
 def photo(pg):
     pg.goto(URL); pg.wait_for_timeout(600)
