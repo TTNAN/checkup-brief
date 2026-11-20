@@ -32,7 +32,7 @@ const UI = {
   zh: {
     localBadge: '100% 本地处理 · 不上传',
     eyebrow: 'CHECKUP BRIEF · 一页纸人话简报',
-    title: '体检单看不懂？<br><em>一页纸</em>，翻译成人话。',
+    title: '体检单看不懂？<br><em>一页纸</em>，<span class="nw">翻译成人话。</span>',
     lede: '导入体检报告（PDF、照片或文字），几秒钟得到：总分和红黄绿灯、每项异常一句人话、下次该查什么、该挂哪个科、接下来 30 天怎么改。',
     ctaSample: '用示例报告试一下', ctaMine: '导入我的报告',
     point1: '30+ 指标别名自动识别', point2: '优先用报告单上的参考范围', point3: '零依赖，断网也能用',

@@ -363,3 +363,4 @@ pre.json { background: var(--paper-2); border-radius: 14px; padding: 16px; font-
   .daily3 ul { margin: 0; padding-left: 16px; font-size: 14px; line-height: 1.65; }
   .daily3 li + li { margin-top: 4px; }
 }
+.nw { white-space: nowrap; }

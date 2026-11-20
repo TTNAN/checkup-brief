@@ -196,6 +196,14 @@ npm test   # node --test tests/*.test.js, nothing to install
 
 Health education only. Not a diagnosis and not a substitute for a doctor or proper tests. Results depend on sex, age, reagents and each hospital's ranges; your report and your doctor come first. For anything about medication or recheck intervals, see a doctor.
 
+## Buy me a coffee
+
+If this project saved you some time, you're welcome to buy me a coffee. ☕
+
+| WeChat Pay |
+| -------- |
+| <img src="docs/assets/wechat-pay.png" width="220" alt="WeChat Pay tip code"> |
+
 ## License
 
 [MIT](LICENSE) © TTNAN
