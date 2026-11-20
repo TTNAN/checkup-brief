@@ -13,6 +13,8 @@
 ## 数据流
 
 ```
+PDF / 照片 / 截图 / 文字
+  → web/import.js       pdf.js 文字层 → 按坐标还原行；扫描件 / 图片 → tesseract.js 本地 OCR
 体检报告文字
   → src/aliases.js      别名归一（ALT = 谷丙转氨酶）
   → src/parser.js       parseReportText(text)
@@ -39,6 +41,7 @@
 | `src/plan-30d.js` | 30 天改善计划 + 打卡表 | 是 |
 | `src/markdown.js` | 拼出整份 Markdown 简报 | 是 |
 | `bin/checkup-brief.js` | 命令行 | 否（读文件） |
+| `web/import.js` | PDF / 图片 / 文本导入（本地，按需加载 vendor） | 否（浏览器） |
 | `web/app.js` | 演示页交互、中 / EN、分享长图、打卡 | 否（DOM） |
 
 ## 计分规则

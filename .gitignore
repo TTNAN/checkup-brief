@@ -19,6 +19,9 @@ uploads/
 !docs/screenshots/*.png
 !docs/screenshots/*.jpg
 !docs/assets/*.png
+# 例外：examples/ 里的演示文件是编造的示例数据（demo-*），允许提交
+!examples/demo-*.pdf
+!examples/demo-*.jpg
 
 # 环境变量与密钥
 .env

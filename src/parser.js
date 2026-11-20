@@ -9,7 +9,8 @@
 // 解析思路（刻意做得保守、可解释）：
 //   0. 先做文本清洗：全角转半角（（）＜＞～－．：）、统一各种破折号；
 //   1. 用别名表把指标名归一到 id（最长写法优先，避免“胆固醇”抢走“总胆固醇”）；
-//   2. 跳过指标名后面的括号缩写，再找第一个数值，避免把 HbA1c 里的 1 当成结果；
+//   2. 跳过指标名后面的括号缩写 / 英文缩写列，再找第一个数值，避免把 HbA1c 里的 1 当成结果；
+//      OCR 拆开的汉字（“总 胆 固 醇”）先合并；
 //   3. 参考范围只在数值后面找，支持 3.9-6.1 / 3.9~6.1 / 0.00--1.70 / <5.2 / ≤5.2 / >1.0；
 //   4. 优先用报告单上印的参考范围，报告没印才用内置参考范围；
 //   5. 判定只做“是否超出范围”这一层，不做诊断、不推疾病。
@@ -31,15 +32,27 @@ function loadDeps() {
   };
 }
 
+// PDF 里的中文经常是“长得一样但编码不同”的部首字（⾎ ⽩ ⻔），先统一成常用汉字。
+// NFKC 能处理康熙部首（U+2F00–2FDF）和兼容汉字；CJK 部首补充区（U+2E80–2EFF）没有标准映射，补一张小表。
+const RADICAL_SUPPLEMENT = {
+  '⺟': '母', '⺠': '民', '⻅': '见', '⻆': '角', '⻋': '车', '⻓': '长', '⻔': '门',
+  '⻘': '青', '⻛': '风', '⻜': '飞', '⻝': '食', '⻢': '马', '⻣': '骨', '⻤': '鬼',
+  '⻥': '鱼', '⻦': '鸟', '⻨': '麦', '⻩': '黄', '⻬': '齐', '⻮': '齿', '⻰': '龙', '⻳': '龟',
+};
+
 // 全角 → 半角，统一破折号和比较符号。
 function normalizeText(text) {
   return String(text)
+    .normalize('NFKC')
+    .replace(/[\u2E80-\u2EFF]/g, (c) => RADICAL_SUPPLEMENT[c] || c)
     .replace(/[\uFF01-\uFF5E]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/\u3000/g, ' ')
     .replace(/[–—―−‐]/g, '-')
     .replace(/[〜～]/g, '~')
     .replace(/≤/g, '<')
-    .replace(/≥/g, '>');
+    .replace(/≥/g, '>')
+    // OCR 常把中文拆开（“总 胆 固 醇”），这里把汉字之间的空格合回去。
+    .replace(/([\u4e00-\u9fa5])[ \t]+(?=[\u4e00-\u9fa5])/g, '$1');
 }
 
 const NUM = '(\\d+(?:\\.\\d+)?)';
@@ -89,7 +102,25 @@ function makeItem(meta, value, unit, range, flag) {
   };
 }
 
-function parseReportText(text) {
+// OCR 模式下的纠错：只在“明显不合理”时才动，并且把改动记在 item.ocrFix 里让用户核对。
+//   1. 小数点丢失：6.12 → 612。数值远超范围、且除以 10 / 100 后正好落在合理区间，才还原。
+//   2. 单位识别乱码（10A9儿、pmol/L 之类）：和该指标的常用单位对不上时，用常用单位。
+function fixOcrValue(value, raw, meta, range) {
+  if (raw.includes('.')) return null;
+  const high = range.high != null ? range.high : meta.high;
+  const low = range.low != null ? range.low : meta.low || 0;
+  if (high == null || value <= high * 5) return null;
+  for (const d of [10, 100, 1000]) {
+    const v = value / d;
+    if (v >= low * 0.5 && v <= high * 2.5) return Math.round(v * 1000) / 1000;
+  }
+  return null;
+}
+
+const UNIT_KEEP = /^(mmol\/L|umol\/L|mg\/dL|U\/L|g\/L|%|10\^9\/L|10\^12\/L|mIU\/L|uIU\/mL|pmol\/L|mmHg|kg\/m2|mg\/L|mL\/min.*)$/i;
+
+function parseReportText(text, options = {}) {
+  const ocr = !!options.ocr;
   const { REFERENCE_RANGES, SORTED_NAMES, NAME_TO_ID } = loadDeps();
   const byId = Object.fromEntries(REFERENCE_RANGES.map((r) => [r.id, r]));
   const results = [];
@@ -129,7 +160,10 @@ function parseReportText(text) {
       if (!meta) continue;
 
       // 跳过紧跟在名字后的括号缩写，例如 “糖化血红蛋白(HbA1c) 5.6”。
-      let rest = line.slice(idx + name.length).replace(/^\s*\([^)]*\)/, '');
+      // 表格版报告常在名字后跟一列英文缩写（“糖化血红蛋白 HbA1c 5.6”），也一并跳过。
+      let rest = line.slice(idx + name.length)
+        .replace(/^\s*\([^)]*\)/, '')
+        .replace(/^\s*[A-Za-z][A-Za-z0-9\-]*(?=\s)/, '');
       const numMatch = rest.match(/(-?\d+(?:\.\d+)?)/);
       if (!numMatch) continue;
       const value = parseFloat(numMatch[1]);
@@ -138,9 +172,11 @@ function parseReportText(text) {
       // 记录报告单自带的 ↑↓ / H L 标记（数值前后都可能出现），然后去掉，避免干扰取单位。
       let flag = null;
       const pre = rest.slice(0, numMatch.index).match(/[↑↓]/);
-      const post = afterValue.match(/^\s*([↑↓]|[HL](?=\s|$))/);
+      const post = afterValue.match(/^\s*([↑↓]|[HL](?=\s|$))/)
+        // OCR 常把 ↑ 认成 1 / 个 / 人 / t：数值后面单独一个这样的字符、再跟单位，就当作 ↑。
+        || (ocr ? afterValue.match(/^\s+([1个人tT](?=\s+[A-Za-zμu%]))/) : null);
       const mark = (post && post[1]) || (pre && pre[0]);
-      if (mark) flag = /[↑H]/.test(mark) ? 'up' : 'down';
+      if (mark) flag = /[↓L]/.test(mark) ? 'down' : 'up';
       if (post) afterValue = afterValue.slice(post[0].length);
 
       // 单位：数值后面第一个字母组合，例如 mmol/L、umol/L、10^9/L、%。
@@ -153,8 +189,18 @@ function parseReportText(text) {
         ? { low: reportRange.low, high: reportRange.high, source: 'report' }
         : { low: meta.low, high: meta.high, source: 'builtin' };
 
+      let finalValue = value;
+      let ocrFix = null;
+      if (ocr) {
+        const fixed = fixOcrValue(value, numMatch[1], meta, effective);
+        if (fixed != null) { ocrFix = { from: value, to: fixed }; finalValue = fixed; }
+        if (!UNIT_KEEP.test(unit || '') || (unit !== meta.unit && !/^mg\/dL$/i.test(unit))) unit = meta.unit;
+      }
+
       seen.add(id);
-      results.push(makeItem(meta, value, unit || meta.unit, effective, flag));
+      const item = makeItem(meta, finalValue, unit || meta.unit, effective, flag);
+      if (ocrFix) item.ocrFix = ocrFix;
+      results.push(item);
       break; // 一行只认一个指标，避免重复匹配。
     }
   }

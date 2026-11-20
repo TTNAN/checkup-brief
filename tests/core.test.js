@@ -93,3 +93,38 @@ test('全部正常时 100 分', () => {
   const items = parseReportText('谷丙转氨酶 20 U/L 9-50\n尿酸 300 umol/L 208-428');
   assert.equal(buildBriefing(items).score, 100);
 });
+
+test('表格版：名字后面跟英文缩写列', () => {
+  const [a] = parseReportText('12 糖化血红蛋白 HbA1c 5.6 % 4.0-6.0');
+  assert.equal(a.value, 5.6);
+  const [b] = parseReportText('3 谷丙转氨酶 ALT 52 ↑ U/L 9-50');
+  assert.deepEqual([b.value, b.flag, b.range.high], [52, 'up', 50]);
+});
+
+test('OCR 拆开的汉字能合并', () => {
+  const [a] = parseReportText('总 胆 固 醇  6.12  mmol/L  <5.20');
+  assert.equal(a.id, 'tc');
+  assert.equal(a.status, 'high');
+});
+
+test('PDF 里的康熙部首 / 兼容汉字能识别', () => {
+  const items = parseReportText('⾎红蛋⽩  HGB  152  g/L  130--175\n天⻔冬氨酸氨基转移酶  AST  31  U/L  15--40\n⽢油三酯  TG  2.48  ↑  mmol/L  0.00--1.70');
+  assert.deepEqual(items.map((i) => i.id), ['hb', 'ast', 'tg']);
+});
+
+test('OCR 模式：小数点丢失、↑ 认成 1、单位乱码', () => {
+  const items = parseReportText('1  总胆固醇  TC  612 1  mmol/L  0.00--5.20\n2  白细胞计数  WBC  6.2  10A9儿  3.5--9.5\n3  尿酸  UA  452 人  hmol作  208--428', { ocr: true });
+  const [tc, wbc, ua] = items;
+  assert.equal(tc.value, 6.12);
+  assert.deepEqual(tc.ocrFix, { from: 612, to: 6.12 });
+  assert.equal(tc.flag, 'up');
+  assert.equal(wbc.unit, '10^9/L');
+  assert.equal(ua.value, 452);
+  assert.equal(ua.ocrFix, undefined);
+  assert.equal(ua.unit, 'umol/L');
+});
+
+test('非 OCR 模式不做任何纠错', () => {
+  const [tc] = parseReportText('总胆固醇 612 mmol/L <5.2');
+  assert.equal(tc.value, 612);
+});

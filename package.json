@@ -1,6 +1,6 @@
 {
   "name": "checkup-brief",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "把体检报告，变成一页能看懂的人话简报。Turn your checkup report into a one-page brief you can actually understand.",
   "license": "MIT",
   "author": "TTNAN",

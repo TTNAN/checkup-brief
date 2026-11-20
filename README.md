@@ -20,9 +20,9 @@
 > [!IMPORTANT]
 > **只做健康科普，不做诊断，不能替代医生。** 一切以报告单上的参考范围和医生的解释为准。
 
-**checkup-brief** 把一份看不懂的体检报告，变成一页能看懂的人话简报：总分、红黄绿灯、每项异常一句人话，再告诉你下次该查什么、该挂哪个科、接下来 30 天怎么改。
+**checkup-brief** 把医院给的体检报告——**PDF、照片、截图或文字**——变成一页能看懂的人话简报：总分、红黄绿灯、每项异常一句人话，再告诉你下次该查什么、该挂哪个科、接下来 30 天怎么改。
 
-全部在你的浏览器里完成——不上传、不注册、不联网、没有任何依赖。
+全部在你的浏览器里完成——PDF 解析和中文 OCR 也在本地跑，不上传、不注册、断网可用。
 
 ## 30 秒看懂
 
@@ -46,7 +46,8 @@
 | --- | --- | --- |
 | 红黄绿判定 | 靠模型“记得”的范围，可能编 | 优先用**报告单上印的范围**，确定性、可复算 |
 | 计分 | 每次不一样 | 规则公开写在代码里，同一份报告永远同一个分 |
-| 隐私 | 整份报告上传云端 | **100% 本地**，断网也能用 |
+| 隐私 | 整份报告上传云端 | **100% 本地**，PDF / 照片也在本机识别 |
+| 照片识别出错 | 不知道哪里错了 | 漏小数点等常见 OCR 错误自动修正并**标出来让你核对** |
 | 下一步 | 一段长回答 | 套餐、科室、问题清单、30 天打卡，直接能用 |
 
 ## 五个功能
@@ -65,14 +66,20 @@
   <img src="docs/assets/share-card.png" alt="分享长图" width="24%">
 </p>
 
-### 2. 中文体检解析器
+### 2. 中文体检解析器 · PDF / 照片导入
 
-- 直接粘贴报告文字，也支持 OCR 结果、PDF 里复制出来的文本、拖入 `.txt`
+国内医院的报告大多是 PDF，所以导入是第一等公民：
+
+- **文字版 PDF**：直接读取文字层，按坐标还原成“一行一项”，表格版报告也能对齐；顺手修掉 PDF 里常见的“部首字”（⾎、⽩、⻔ 看着一样、编码不同）
+- **扫描件 PDF / 手机照片 / 截图**：浏览器内中文 OCR（tesseract.js，模型约 10 MB，首次加载后缓存），**图片不出本机**
+- **OCR 纠错**：“6.12”认成“612”、“↑”认成“1”、单位乱码……按参考范围自动修正，并在简报里**标黄提示核对**
+- 也可以直接粘贴文字、拖入 `.txt`，或 Ctrl+V 粘贴截图
 - **别名归一**：30 个常见指标、120+ 种写法（ALT = 谷丙转氨酶 = 丙氨酸氨基转移酶……），见 [`src/aliases.js`](src/aliases.js)
 - **兼容各种格式**：全角括号、`↑ ↓ H L` 标记、`3.9-6.1 / 3.9~6.1 / 0.00--1.70 / ≤5.2` 等参考范围写法
 - **报告单范围优先**，没印才用内置范围（[`src/reference-ranges.js`](src/reference-ranges.js)：血常规、血糖、血脂、肝肾、尿酸、甲状腺、血压、BMI）
 - 输出结构化 JSON，可以直接接到你自己的程序里
 
+<p align="center"><img src="docs/assets/import-photo.gif" alt="导入一张报告照片，本地识别后生成简报" width="80%"></p>
 <p align="center"><img src="docs/assets/parser.png" alt="解析结果" width="80%"></p>
 
 ### 3. 下次查什么（体检套餐选择器）
@@ -115,11 +122,11 @@
 
 ### 在线体验
 
-打开 **<https://ttnan.github.io/checkup-brief/>**，点“用示例报告试一下”。想直接看结果：[`/#demo`](https://ttnan.github.io/checkup-brief/#demo)。
+打开 **<https://ttnan.github.io/checkup-brief/>**，拖入你的 PDF / 照片，或者点“示例 PDF”“示例照片”试试。想直接看结果：[`/#demo`](https://ttnan.github.io/checkup-brief/#demo)。
 
 ### 本地打开
 
-不用安装任何东西，双击 `web/index.html` 即可（纯静态、离线可用）。或者：
+不用安装任何东西。粘贴文字的话双击 `web/index.html` 就能用；PDF / 照片导入需要通过本地服务器打开（浏览器不允许 `file://` 页面加载识别模型）：
 
 ```bash
 git clone https://github.com/TTNAN/checkup-brief.git
@@ -179,7 +186,7 @@ console.log(brief.score, brief.level);                  // 68 '有几项要注�
 ## 隐私
 
 - 解析、计分、推荐全部在本地完成，**不上传、不存储**你的报告
-- 页面没有统计、没有埋点、没有任何第三方请求，不加载外部字体和 CDN
+- 页面没有统计、没有埋点、没有任何第三方请求；PDF.js、OCR 模型、字体都打包在仓库里（[web/vendor](web/vendor/README.md)），不走 CDN
 - 30 天打卡和语言偏好只存在本机浏览器 `localStorage`，可随时一键清空
 - 请不要把真实体检报告贴到 Issue / PR / 截图里。详见 [docs/PRIVACY.md](docs/PRIVACY.md)
 
@@ -188,6 +195,9 @@ console.log(brief.score, brief.level);                  // 68 '有几项要注�
 ```
 checkup-brief/
 ├── web/                 演示页（index.html / styles.css / app.js）
+│   ├── import.js            PDF / 图片 / 文本导入（本地）
+│   ├── vendor/              pdf.js、tesseract.js 及中文模型（按需加载）
+│   └── fonts/               思源宋体子集（标题用）
 ├── src/
 │   ├── parser.js            解析 + 判定
 │   ├── aliases.js           指标别名表
@@ -199,7 +209,7 @@ checkup-brief/
 │   └── markdown.js          整份 Markdown 简报
 ├── bin/checkup-brief.js 命令行
 ├── tests/               零依赖单元测试（node --test）
-├── examples/            脱敏示例：输入 / JSON / 简报
+├── examples/            示例：文字 / PDF / 照片 / JSON / 简报（全是编的数据）
 ├── scripts/             重新生成 README 截图和动图
 └── docs/                架构、隐私、路线图、贡献指南、README 素材
 ```
@@ -208,8 +218,9 @@ checkup-brief/
 
 - [x] 五个模块 + 中 / EN + 分享长图 + 打印
 - [x] 解析器测试用例、命令行
+- [x] PDF / 照片 / 截图导入，本地 OCR + 自动纠错
 - [ ] 更多医院报告版式（美年、爱康、慈铭、公立医院……）
-- [ ] 拍照 / PDF 直接导入（本地 OCR）
+- [ ] 一份报告多页、多个科室时按科室分组
 - [ ] 可选的大模型讲解：只发已判好的异常指标，默认关闭
 
 完整路线图见 [docs/ROADMAP.md](docs/ROADMAP.md)。明确不做：多年趋势热力图、诊断、开药、账号和云同步。

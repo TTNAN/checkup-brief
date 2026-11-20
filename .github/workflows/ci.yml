@@ -22,7 +22,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Syntax check
-        run: for f in src/*.js web/app.js bin/*.js; do node --check "$f"; done
+        run: for f in src/*.js web/app.js web/import.js bin/*.js; do node --check "$f"; done
 
       - name: Unit tests
         run: node --test tests/*.test.js

@@ -1,0 +1,4 @@
+web/vendor/** linguist-vendored
+*.traineddata.gz binary
+*.wasm binary
+*.bcmap binary

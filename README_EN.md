@@ -20,9 +20,9 @@
 > [!IMPORTANT]
 > **For health education only. Not a diagnosis, and not a substitute for a doctor.** The reference ranges on your report and your doctor's reading always come first.
 
-**checkup-brief** turns a checkup report you can't read into a one-page brief you can: a score, red / yellow / green lights, one plain sentence per abnormal result — plus what to check next time, which department to see, and what to change over the next 30 days.
+**checkup-brief** turns the checkup report your hospital gave you — **PDF, photo, screenshot or text** — into a one-page brief you can actually read: a score, red / yellow / green lights, one plain sentence per abnormal result — plus what to check next time, which department to see, and what to change over the next 30 days.
 
-Everything runs in your browser. No upload, no sign-up, no network, no dependencies.
+Everything runs in your browser — PDF parsing and Chinese OCR included. No upload, no sign-up, works offline.
 
 ## 30-second tour
 
@@ -46,7 +46,8 @@ You could paste it into a chatbot, but it may invent reference ranges, answer di
 | --- | --- | --- |
 | Traffic lights | From ranges the model "remembers" — may be made up | Uses the **ranges printed on your report** first; deterministic |
 | Score | Changes every time | Open rules in code; same report, same score |
-| Privacy | Whole report sent to the cloud | **100% local**, works offline |
+| Privacy | Whole report sent to the cloud | **100% local**, even PDFs and photos |
+| OCR mistakes | You never know | Common OCR slips (lost decimal points…) auto-corrected and **flagged for you to check** |
 | Next steps | One long answer | Package, departments, questions, a 30-day check-in — ready to use |
 
 ## Five features
@@ -63,14 +64,20 @@ You could paste it into a chatbot, but it may invent reference ranges, answer di
   <img src="docs/assets/share-card.png" alt="Share image" width="24%">
 </p>
 
-### 2. Chinese checkup parser
+### 2. Chinese checkup parser · PDF / photo import
 
-- Paste text, OCR output, text copied from a PDF, or drop a `.txt` file
+Most Chinese hospitals hand out PDFs, so import comes first:
+
+- **Text PDFs**: read the text layer and rebuild one-row-per-test from coordinates; also fixes the look-alike "radical" characters common in Chinese PDFs
+- **Scanned PDFs, phone photos, screenshots**: in-browser Chinese OCR (tesseract.js, ≈10 MB model, cached after first load) — **images never leave your device**
+- **OCR repair**: "6.12" read as "612", "↑" read as "1", garbled units — corrected against the reference range and **highlighted for you to verify**
+- Or paste text, drop a `.txt`, or Ctrl+V a screenshot
 - **Alias normalisation**: 30 common indicators, 120+ spellings — see [`src/aliases.js`](src/aliases.js)
 - **Tolerant**: full-width brackets, `↑ ↓ H L` flags, `3.9-6.1 / 3.9~6.1 / 0.00--1.70 / ≤5.2` range formats
 - **Report ranges first**, built-in ranges as fallback ([`src/reference-ranges.js`](src/reference-ranges.js))
 - Structured JSON output
 
+<p align="center"><img src="docs/assets/import-photo.gif" alt="Import a photo of a report, recognised on-device" width="80%"></p>
 <p align="center"><img src="docs/assets/parser-en.png" alt="Parser" width="80%"></p>
 
 ### 3. What to check next time
@@ -105,11 +112,11 @@ Eat, move, sleep — **no medication, no doses**:
 
 ### Live demo
 
-Open **<https://ttnan.github.io/checkup-brief/>** and click "Try the sample report", or jump straight to the result: [`/#demo`](https://ttnan.github.io/checkup-brief/#demo).
+Open **<https://ttnan.github.io/checkup-brief/>** and drop in your PDF / photo, or try "sample PDF" / "sample photo". Or jump straight to the result: [`/#demo`](https://ttnan.github.io/checkup-brief/#demo).
 
 ### Run locally
 
-Nothing to install — double-click `web/index.html`. Or:
+Nothing to install. For pasted text, just double-click `web/index.html`; PDF / photo import needs a local server (browsers block loading the OCR model from `file://`):
 
 ```bash
 git clone https://github.com/TTNAN/checkup-brief.git
@@ -163,7 +170,7 @@ Sample (32-year-old male): 4 out of range −28, fasting glucose and blood press
 ## Privacy
 
 - Parsing, scoring and recommendations all happen locally; nothing is uploaded or stored
-- No analytics, no tracking, no third-party requests, no external fonts or CDNs
+- No analytics, no tracking, no third-party requests; PDF.js, the OCR model and fonts ship in the repo ([web/vendor](web/vendor/README.md)), no CDN
 - Check-ins and language preference live only in your browser's `localStorage`
 - Please never post a real report in issues, PRs or screenshots. See [docs/PRIVACY.md](docs/PRIVACY.md)
 
@@ -171,8 +178,8 @@ Sample (32-year-old male): 4 out of range −28, fasting glucose and blood press
 
 - [x] Five modules, 中 / EN, share image, print
 - [x] Parser tests, CLI
+- [x] PDF / photo / screenshot import with on-device OCR and auto-repair
 - [ ] More hospital report layouts
-- [ ] Photo / PDF import with local OCR
 - [ ] Optional LLM explanations — send only the already-judged abnormal values; off by default
 
 See [docs/ROADMAP.md](docs/ROADMAP.md). Out of scope: multi-year trend heatmaps, diagnosis, prescriptions, accounts, cloud sync.
