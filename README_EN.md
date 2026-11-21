@@ -108,7 +108,7 @@ Eat, move, sleep — **no medication, no doses**:
 
 <p align="center"><img src="docs/assets/plan-checkin.gif" alt="30-day check-in and share image" width="80%"></p>
 
-> Also: one-click 中文 / English, dark mode, mobile layout.
+> Also: one-click 中文 / English, dark mode (toggle at top right, follows your system by default), mobile layout.
 
 ## Quick start
 

@@ -79,7 +79,7 @@ const UI = {
     shareAbn: '需要留意', shareOk: (n) => `其余 ${n} 项正常`,
     // 家庭档案
     me: '我', aboutMe: '关于你', aboutWho: (n) => `关于${n}`, whoseReport: '给谁看报告',
-    familyOpen: '家庭档案', familyTitle: '家庭档案', addMember: '添加成员',
+    themeToggle: '切换深色 / 浅色', familyOpen: '家庭档案', familyTitle: '家庭档案', addMember: '添加成员',
     familyHint: '给爸妈也建一份：按成员分开存报告和 30 天打卡，年龄、性别、家族史自动带入。只存在这台设备的浏览器里，不上传。',
     membersN: (n) => `成员 · ${n}`, reportsOf: (who, n) => `${who}的报告 · ${n}`,
     ageN: (n) => `${n} 岁`, reportsN: (n) => `${n} 份报告`,
@@ -150,7 +150,7 @@ const UI = {
     shareAbn: 'Worth attention', shareOk: (n) => `${n} others normal`,
     // Family archive
     me: 'Me', aboutMe: 'About you', aboutWho: (n) => `About ${n}`, whoseReport: 'Whose report',
-    familyOpen: 'Family archive', familyTitle: 'Family archive', addMember: 'Add member',
+    themeToggle: 'Switch dark / light', familyOpen: 'Family archive', familyTitle: 'Family archive', addMember: 'Add member',
     familyHint: 'Keep one for your parents too: reports and 30-day check-ins are stored per member, and age, sex and family history fill in automatically. Stays in this browser, never uploaded.',
     membersN: (n) => `Members · ${n}`, reportsOf: (p, n) => `${cap(p)} reports · ${n}`,
     ageN: (n) => `${n} y`, reportsN: (n) => `${n} report${n === 1 ? '' : 's'}`,
@@ -1019,6 +1019,13 @@ document.addEventListener('paste', (e) => {
 });
 
 $('#memberPill').onclick = () => openFamily();
+$('#themeBtn').onclick = () => {
+  const root = document.documentElement;
+  const cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  root.dataset.theme = next;
+  store.set('theme', next);
+};
 
 /* Hero 小卡片的分数环 */
 animateRing($('#heroRingBar'), $('#heroScore'), 68, 314.16);
