@@ -110,7 +110,7 @@
 
 <p align="center"><img src="docs/assets/plan-checkin.gif" alt="30 天打卡和分享长图" width="80%"></p>
 
-> 另外：整页支持 **中文 / English** 一键切换、深色模式（右上角按钮切换，默认跟随系统）、手机端。
+> 另外：整页支持 **中文 / English** 一键切换、手机端。
 
 <details>
 <summary>📱 手机端 / 🌐 English 截图</summary>
