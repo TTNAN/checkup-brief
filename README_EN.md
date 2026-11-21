@@ -3,7 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://ttnan.github.io/checkup-brief/"><b>Live demo</b></a> ·
+  <a href="https://checkupbrief.ggff.net/"><b>Live demo</b></a> ·
+  <a href="https://checkup-brief.pages.dev/">Mirror</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#five-features">Five features</a> ·
   <a href="README.md">中文</a>
@@ -112,7 +113,7 @@ Eat, move, sleep — **no medication, no doses**:
 
 ### Live demo
 
-Open **<https://ttnan.github.io/checkup-brief/>** and drop in your PDF / photo, or try "sample PDF" / "sample photo". Or jump straight to the result: [`/#demo`](https://ttnan.github.io/checkup-brief/#demo).
+Open **<https://checkupbrief.ggff.net/>** and drop in your PDF / photo, or try "sample PDF" / "sample photo". Or jump straight to the result: [`/#demo`](https://checkupbrief.ggff.net/#demo).
 
 ### Run locally
 
