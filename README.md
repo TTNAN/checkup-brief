@@ -3,7 +3,8 @@
 </p>
 
 <p align="center">
-  <a href="https://ttnan.github.io/checkup-brief/"><b>在线体验</b></a> ·
+  <a href="https://checkupbrief.ggff.net/"><b>在线体验</b></a> ·
+  <a href="https://checkup-brief.pages.dev/">备用地址</a> ·
   <a href="#快速开始">快速开始</a> ·
   <a href="#五个功能">五个功能</a> ·
   <a href="README_EN.md">English</a>
@@ -122,7 +123,7 @@
 
 ### 在线体验
 
-打开 **<https://ttnan.github.io/checkup-brief/>**，拖入你的 PDF / 照片，或者点“示例 PDF”“示例照片”试试。想直接看结果：[`/#demo`](https://ttnan.github.io/checkup-brief/#demo)。
+打开 **<https://checkupbrief.ggff.net/>**，拖入你的 PDF / 照片，或者点“示例 PDF”“示例照片”试试。想直接看结果：[`/#demo`](https://checkupbrief.ggff.net/#demo)。
 
 ### 本地打开
 
