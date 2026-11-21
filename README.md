@@ -61,6 +61,7 @@
 - **红黄绿灯**：超出范围 / 正常偏高 / 正常，每项都画出“你的数值落在参考范围的哪里”
 - **每项异常一句人话**，不说术语
 - **一键生成分享长图**，发给家人；也能直接打印 / 存 PDF 带去见医生
+- **家庭档案**：帮爸妈也建一份。按成员（爸爸、妈妈、我……）分开存报告和 30 天打卡，年龄、性别、家族史自动带入“下次查什么”；整个家庭档案可导出成一个 JSON 文件，换手机或发给爸妈再导入，依旧只存在本机
 
 <p align="center">
   <img src="docs/assets/brief.png" alt="一页纸简报" width="72%">
@@ -186,9 +187,10 @@ console.log(brief.score, brief.level);                  // 68 '有几项要注�
 
 ## 隐私
 
-- 解析、计分、推荐全部在本地完成，**不上传、不存储**你的报告
+- 解析、计分、推荐全部在本地完成，**不上传**你的报告
 - 页面没有统计、没有埋点、没有任何第三方请求；PDF.js、OCR 模型、字体都打包在仓库里（[web/vendor](web/vendor/README.md)），不走 CDN
-- 30 天打卡和语言偏好只存在本机浏览器 `localStorage`，可随时一键清空
+- 家庭档案只存在本机浏览器：成员资料和 30 天打卡在 `localStorage`，报告只存识别出的文字和分数（IndexedDB），**不存原始照片 / PDF**；每份报告、每位成员都能单独删除
+- 导出的家庭档案是一个本地生成的 JSON 文件，导入也在本机完成，全程不联网
 - 请不要把真实体检报告贴到 Issue / PR / 截图里。详见 [docs/PRIVACY.md](docs/PRIVACY.md)
 
 ## 仓库结构
@@ -206,6 +208,7 @@ checkup-brief/
 │   ├── package-recommender.js ③ 下次查什么
 │   ├── clinic-guide.js      ④ 挂号清单
 │   ├── plan-30d.js          ⑤ 30 天计划
+│   ├── family.js            家庭档案：成员、报告存档、导出导入
 │   └── markdown.js          整份 Markdown 简报
 ├── bin/checkup-brief.js 命令行
 ├── tests/               零依赖单元测试（node --test）

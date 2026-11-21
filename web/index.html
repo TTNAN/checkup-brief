@@ -19,6 +19,10 @@
     </a>
     <div class="nav-right">
       <span class="pill-local" data-i18n="localBadge">100% 本地处理 · 不上传</span>
+      <button type="button" class="member-pill" id="memberPill" aria-haspopup="dialog" data-i18n-title="familyOpen" title="家庭档案">
+        <i class="avatar" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="2.8" fill="currentColor"/><path d="M2.8 14c.6-2.8 2.7-4.4 5.2-4.4s4.6 1.6 5.2 4.4" fill="currentColor"/></svg></i><span id="memberPillName">我</span>
+        <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
       <div class="seg" role="group" aria-label="语言 / Language">
         <button type="button" data-lang="zh" class="on">中</button>
         <button type="button" data-lang="en">EN</button>
@@ -99,8 +103,11 @@
         </div>
       </div>
       <div class="card profile">
-        <h3 data-i18n="profileTitle">关于你</h3>
+        <h3 id="profileTitle">关于你</h3>
         <p class="muted small" data-i18n="profileHint">用于套餐推荐和 30 天计划，只在本地使用。</p>
+        <div class="field"><span data-i18n="whoseReport">给谁看报告</span>
+          <div class="chips" id="memberChips"></div>
+        </div>
         <label class="field"><span data-i18n="age">年龄</span>
           <input type="number" id="age" min="18" max="100" value="32"></label>
         <div class="field"><span data-i18n="sex">性别</span>
@@ -119,6 +126,7 @@
         <label class="field"><span><span data-i18n="budget">下次体检预算</span> <b id="budgetVal">¥1500</b></span>
           <input type="range" id="budget" min="300" max="5000" step="100" value="1500"></label>
         <button class="btn primary block-btn" id="runBtn" type="button"><span data-i18n="run">生成我的简报</span><i class="spinner"></i></button>
+        <p class="archive-line" id="archiveLine"></p>
       </div>
     </div>
   </section>
@@ -130,6 +138,7 @@
       <div>
         <h2 data-i18n="resultTitle">你的一页纸简报</h2>
         <p class="muted" id="parsedMeta"></p>
+        <div class="saved-bar" id="savedBar" hidden></div>
       </div>
     </div>
 
@@ -152,7 +161,7 @@
 
 <footer class="foot">
   <p data-i18n="footer1">checkup-brief · MIT License · 作者 TTNAN</p>
-  <p class="muted small" data-i18n="footer2">只做健康科普，不做诊断，不能替代医生。本页没有统计、没有第三方请求，你粘贴的内容不会离开这台设备；30 天打卡只存在本机浏览器里。</p>
+  <p class="muted small" data-i18n="footer2">只做健康科普，不做诊断，不能替代医生。本页没有统计、没有第三方请求，你粘贴的内容不会离开这台设备；家庭档案和 30 天打卡只存在本机浏览器里。</p>
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -164,6 +173,7 @@
 <script src="../src/package-recommender.js"></script>
 <script src="../src/clinic-guide.js"></script>
 <script src="../src/plan-30d.js"></script>
+<script src="../src/family.js"></script>
 <script src="import.js"></script>
 <script src="app.js"></script>
 </body>

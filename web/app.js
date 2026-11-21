@@ -1,6 +1,6 @@
 // checkup-brief — web/app.js
 // 演示页交互：粘贴 / 拖入报告 → 解析 → 五个模块；中 / EN 切换；分享长图；30 天打卡。
-// 零依赖，不发任何网络请求。打卡和语言偏好只存在本机 localStorage。
+// 零依赖，不发任何网络请求。家庭档案（成员、打卡）存本机 localStorage，报告文字存本机 IndexedDB。
 // 只做健康科普，不做诊断，不能替代医生。
 'use strict';
 
@@ -57,7 +57,7 @@ const UI = {
     parsedMeta: (n, r) => `识别出 ${n} 项指标，其中 ${r} 项用的是报告单上印的参考范围。`,
     tab1: '一页纸简报', tab2: '解析结果', tab3: '下次查什么', tab4: '挂号清单', tab5: '30 天计划',
     footer1: 'checkup-brief · MIT License · 作者 TTNAN',
-    footer2: '只做健康科普，不做诊断，不能替代医生。本页没有统计、没有第三方请求，你粘贴的内容不会离开这台设备；30 天打卡只存在本机浏览器里。',
+    footer2: '只做健康科普，不做诊断，不能替代医生。本页没有统计、没有第三方请求，你粘贴的内容不会离开这台设备；家庭档案和 30 天打卡只存在本机浏览器里。',
     points: '分', outOfRange: '超出范围', borderline: '正常偏高', normal: '正常',
     status: { high: '偏高', low: '偏低', 'borderline-high': '正常偏高', 'borderline-low': '正常偏低', normal: '正常', unknown: '无法判定' },
     share: '生成分享长图', print: '打印 / 存 PDF', save: '保存图片', close: '关闭',
@@ -77,6 +77,28 @@ const UI = {
     copied: '已复制', savedImg: '图片已生成', empty: '没识别到指标，换个格式试试，或先载入示例看看效果。',
     shareTitle: '体检人话简报', shareFoot: '只做健康科普，不做诊断，不能替代医生',
     shareAbn: '需要留意', shareOk: (n) => `其余 ${n} 项正常`,
+    // 家庭档案
+    me: '我', aboutMe: '关于你', aboutWho: (n) => `关于${n}`, whoseReport: '给谁看报告',
+    familyOpen: '家庭档案', familyTitle: '家庭档案', addMember: '添加成员',
+    familyHint: '给爸妈也建一份：按成员分开存报告和 30 天打卡，年龄、性别、家族史自动带入。只存在这台设备的浏览器里，不上传。',
+    membersN: (n) => `成员 · ${n}`, reportsOf: (who, n) => `${who}的报告 · ${n}`,
+    ageN: (n) => `${n} 岁`, reportsN: (n) => `${n} 份报告`,
+    namePh: '称呼，例如 爸爸', birthPh: '出生年份或年龄', add: '添加', cancel: '取消', rename: '改名', save2: '保存', del: '删除', open: '打开',
+    noReports: '还没有报告。导入一份体检报告，生成简报后会自动存到这里。',
+    archiveLine: (who, n) => (n ? `${who}的档案里有 ${n} 份报告` : `${who}的档案里还没有报告`), viewArchive: '打开档案',
+    savedTo: (who) => `已存到「${who}」的档案`, reportDate: '报告日期', viewAll: '查看档案',
+    sampleNoSave: '示例报告不会自动存档。', saveSample: (who) => `仍然存到「${who}」的档案`,
+    switched: (who) => `已切换到「${who}」`, added: (who) => `已添加「${who}」`,
+    confirmDelMember: (who, n) => `删除「${who}」${n ? `和 TA 的 ${n} 份报告` : ''}？删除后不能恢复。`,
+    confirmDelReport: (d) => `删除 ${d} 这份报告？删除后不能恢复。`,
+    lastMember: '至少要留一位成员。', needName: '先填一个称呼',
+    ioTitle: '导出 / 导入', exportBtn: '导出全家档案', importBtn: '导入档案',
+    ioHint: '导出的是一个 JSON 文件，只有识别出的文字、分数和打卡，不含原图和 PDF。发到爸妈手机上，打开本页导入即可。全程不联网。',
+    importFound: (m, r) => `文件里有 ${m} 位成员、${r} 份报告。`, merge: '合并到现有档案', replace: '替换现有档案',
+    confirmReplace: '替换会删除这台设备上现有的全部家庭档案和打卡，确定吗？',
+    imported2: (m, r) => `已导入：新增 ${m} 位成员、${r} 份报告`, replaced: '已用导入的档案替换',
+    importBad: '这不是 checkup-brief 导出的家庭档案文件。', exported: '已导出档案文件',
+    countsShort: (a, b) => `${a} 项超出 · ${b} 项偏高`,
   },
   en: {
     localBadge: '100% local · nothing uploaded',
@@ -106,7 +128,7 @@ const UI = {
     parsedMeta: (n, r) => `Found ${n} indicators; ${r} use the reference range printed on your report.`,
     tab1: 'Brief', tab2: 'Parsed', tab3: 'Next checkup', tab4: 'Clinic guide', tab5: '30-day plan',
     footer1: 'checkup-brief · MIT License · by TTNAN',
-    footer2: 'Health education only, not a diagnosis. No analytics, no third-party requests; what you paste never leaves this device. Check-ins live only in this browser.',
+    footer2: 'Health education only, not a diagnosis. No analytics, no third-party requests; what you paste never leaves this device. The family archive and check-ins live only in this browser.',
     points: 'pts', outOfRange: 'out of range', borderline: 'borderline', normal: 'normal',
     status: { high: 'High', low: 'Low', 'borderline-high': 'Borderline high', 'borderline-low': 'Borderline low', normal: 'Normal', unknown: 'Unknown' },
     share: 'Make share image', print: 'Print / PDF', save: 'Save image', close: 'Close',
@@ -126,6 +148,28 @@ const UI = {
     copied: 'Copied', savedImg: 'Image ready', empty: 'No indicators found. Try another format, or load the sample first.',
     shareTitle: 'Checkup, in plain words', shareFoot: 'Health education only · not a diagnosis',
     shareAbn: 'Worth attention', shareOk: (n) => `${n} others normal`,
+    // Family archive
+    me: 'Me', aboutMe: 'About you', aboutWho: (n) => `About ${n}`, whoseReport: 'Whose report',
+    familyOpen: 'Family archive', familyTitle: 'Family archive', addMember: 'Add member',
+    familyHint: 'Keep one for your parents too: reports and 30-day check-ins are stored per member, and age, sex and family history fill in automatically. Stays in this browser, never uploaded.',
+    membersN: (n) => `Members · ${n}`, reportsOf: (p, n) => `${cap(p)} reports · ${n}`,
+    ageN: (n) => `${n} y`, reportsN: (n) => `${n} report${n === 1 ? '' : 's'}`,
+    namePh: 'Name, e.g. Dad', birthPh: 'Birth year or age', add: 'Add', cancel: 'Cancel', rename: 'Rename', save2: 'Save', del: 'Delete', open: 'Open',
+    noReports: 'No reports yet. Import a checkup report; once the brief is built it is saved here automatically.',
+    archiveLine: (p, n) => (n ? `${n} report${n === 1 ? '' : 's'} in ${p} archive` : `No reports in ${p} archive yet`), viewArchive: 'Open archive',
+    savedTo: (p) => `Saved to ${p} archive`, reportDate: 'Report date', viewAll: 'View archive',
+    sampleNoSave: 'Sample reports are not saved automatically.', saveSample: (p) => `Save to ${p} archive anyway`,
+    switched: (who) => `Switched to ${who}`, added: (who) => `Added ${who}`,
+    confirmDelMember: (who, n) => `Delete ${who}${n ? ` and ${n} report${n === 1 ? '' : 's'}` : ''}? This can't be undone.`,
+    confirmDelReport: (d) => `Delete the report from ${d}? This can't be undone.`,
+    lastMember: 'Keep at least one member.', needName: 'Enter a name first',
+    ioTitle: 'Export / import', exportBtn: 'Export family archive', importBtn: 'Import archive',
+    ioHint: 'Exports a JSON file with the recognised text, scores and check-ins only, no photos or PDFs. Send it to a parent\'s phone and import it on this page. Works offline.',
+    importFound: (m, r) => `The file has ${m} member${m === 1 ? '' : 's'} and ${r} report${r === 1 ? '' : 's'}.`, merge: 'Merge into this archive', replace: 'Replace this archive',
+    confirmReplace: 'Replacing deletes the whole family archive and check-ins on this device. Continue?',
+    imported2: (m, r) => `Imported: ${m} new member${m === 1 ? '' : 's'}, ${r} new report${r === 1 ? '' : 's'}`, replaced: 'Archive replaced with the imported file',
+    importBad: "This isn't a checkup-brief family archive file.", exported: 'Archive file exported',
+    countsShort: (a, b) => `${a} out of range · ${b} borderline`,
   },
 };
 
@@ -142,10 +186,13 @@ const state = {
   showNormal: false,
   week: null,
   selectedDay: null,
+  isSample: false,      // 示例报告不自动存档
+  currentReport: null,  // 当前打开的、已存档的报告
 };
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const t = () => UI[state.lang];
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const color = (s) => (s === 'high' || s === 'low' ? 'red' : s === 'borderline-high' || s === 'borderline-low' ? 'yellow' : s === 'unknown' ? 'gray' : 'green');
 const nm = (i) => (state.lang === 'en' ? i.en || i.name : i.name);
@@ -169,6 +216,7 @@ function applyI18n() {
   $$('[data-i18n]').forEach((el) => { const v = u[el.dataset.i18n]; if (typeof v === 'string') el.textContent = v; });
   $$('[data-i18n-html]').forEach((el) => { el.innerHTML = u[el.dataset.i18nHtml]; });
   $$('[data-i18n-ph]').forEach((el) => { el.placeholder = u[el.dataset.i18nPh]; });
+  $$('[data-i18n-title]').forEach((el) => { el.title = u[el.dataset.i18nTitle]; });
   $$('.nav .seg button').forEach((b) => b.classList.toggle('on', b.dataset.lang === state.lang));
   updateLineCount();
 }
@@ -347,9 +395,9 @@ function renderClinic() {
 }
 
 /* ---------- 5. 30 天计划 + 打卡 ---------- */
-function getChecks() { return store.get('checks', Array.from({ length: 30 }, () => ({ eat: false, move: false, sleep: false }))); }
+function getChecks() { return activeMember().checks.map((c) => ({ ...c })); }
 function currentDay() {
-  let start = store.get('start', null);
+  const start = activeMember().start;
   if (!start) return 1;
   const d = Math.floor((Date.now() - start) / 86400000) + 1;
   return Math.max(1, Math.min(30, d));
@@ -405,14 +453,14 @@ function renderPlan() {
   $$('#panel-plan .day').forEach((b) => { b.onclick = () => { state.selectedDay = +b.dataset.day; state.week = Math.min(4, Math.floor((state.selectedDay - 1) / 7) + 1); renderPlan(); }; });
   $$('#panel-plan .check3 button').forEach((b) => {
     b.onclick = () => {
-      if (!store.get('start', null)) store.set('start', Date.now() - (today - 1) * 86400000);
-      const all = getChecks();
-      all[today - 1][b.dataset.k] = !all[today - 1][b.dataset.k];
-      store.set('checks', all);
+      const m = activeMember();
+      if (!m.start) m.start = Date.now() - (today - 1) * 86400000;
+      m.checks[today - 1][b.dataset.k] = !m.checks[today - 1][b.dataset.k];
+      saveArchive();
       renderPlan();
     };
   });
-  $('#resetChecks').onclick = () => { localStorage.removeItem('checkup-brief.checks'); localStorage.removeItem('checkup-brief.start'); state.selectedDay = null; renderPlan(); };
+  $('#resetChecks').onclick = () => { const m = activeMember(); m.checks = Family.emptyChecks(); m.start = null; saveArchive(); state.selectedDay = null; renderPlan(); };
 }
 
 /* ---------- 分享长图（canvas 本地绘制，不上传） ---------- */
@@ -489,12 +537,375 @@ function openShare() {
   toast(u.savedImg);
 }
 
+/* ---------- 家庭档案：成员 + 每人的报告 ---------- */
+// 成员资料和 30 天打卡很小，存 localStorage；报告文字存 IndexedDB（不可用时退回 localStorage）。
+// 只存识别出的文字和分数摘要，不存原始照片 / PDF。全部留在本机，不上传。
+const fam = (() => {
+  const legacy = { checks: store.get('checks', null), start: store.get('start', null) };
+  const { archive, migrated } = Family.loadOrMigrate(store.get('family', null), legacy);
+  store.set('family', archive);
+  if (migrated || legacy.checks || legacy.start) {
+    // 旧版单人打卡已迁进默认成员“我”
+    try { localStorage.removeItem('checkup-brief.checks'); localStorage.removeItem('checkup-brief.start'); } catch { /* 忽略 */ }
+  }
+  return { archive, reports: [] };
+})();
+function activeMember() { return fam.archive.members.find((m) => m.id === fam.archive.activeId) || fam.archive.members[0]; }
+function saveArchive() { store.set('family', fam.archive); }
+const memberName = (m) => (m && m.name) || t().me;
+// 英文里的所有格：Dad's / your；中文直接用称呼（“爸爸的档案”“我的档案”）
+const possOf = (m) => (state.lang === 'en' ? (m.name ? `${m.name}'s` : 'your') : memberName(m));
+const memberInitial = (m) => [...memberName(m)][0].toUpperCase();
+const reportsOf = (id) => Family.sortReports(fam.reports.filter((r) => r.memberId === id));
+
+const reportDB = (() => {
+  let dbp = null;
+  const lsAll = () => store.get('reports', []);
+  const lsSet = (list) => store.set('reports', list);
+  function open() {
+    if (!dbp) {
+      dbp = new Promise((resolve) => {
+        try {
+          const req = indexedDB.open('checkup-brief', 1);
+          req.onupgradeneeded = () => { req.result.createObjectStore('reports', { keyPath: 'id' }); };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => resolve(null);
+          req.onblocked = () => resolve(null);
+        } catch { resolve(null); }
+      });
+    }
+    return dbp;
+  }
+  async function tx(fn) {
+    const db = await open();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      const tr = db.transaction('reports', 'readwrite');
+      fn(tr.objectStore('reports'));
+      tr.oncomplete = () => resolve(true);
+      tr.onerror = () => resolve(false);
+    });
+  }
+  return {
+    async all() {
+      const db = await open();
+      if (!db) return lsAll();
+      return new Promise((resolve) => {
+        const req = db.transaction('reports').objectStore('reports').getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      });
+    },
+    async put(r) { if (!(await tx((st) => st.put(r)))) lsSet([...lsAll().filter((x) => x.id !== r.id), r]); },
+    async del(ids) { if (!(await tx((st) => ids.forEach((id) => st.delete(id))))) lsSet(lsAll().filter((x) => !ids.includes(x.id))); },
+    async replaceAll(list) { if (!(await tx((st) => { st.clear(); list.forEach((r) => st.put(r)); }))) lsSet(list); },
+  };
+})();
+
+async function loadReports() {
+  fam.reports = await reportDB.all();
+  renderFamily();
+}
+
+function applyMemberToInputs() {
+  const m = activeMember();
+  const p = Family.memberProfile(m);
+  $('#age').value = p.age;
+  $$('#sexSeg button').forEach((x) => x.classList.toggle('on', x.dataset.sex === p.sex));
+  $$('#familyChips button').forEach((x) => x.classList.toggle('on', p.familyHistory.includes(x.dataset.fam)));
+  Object.assign(state.profile, p);
+}
+
+function renderFamily() {
+  const u = t();
+  const m = activeMember();
+  const name = memberName(m);
+  $('#memberPillName').textContent = name;
+  $('#profileTitle').textContent = m.name ? u.aboutWho(m.name) : u.aboutMe;
+  $('#memberChips').innerHTML = fam.archive.members.map((x) => `<button type="button" data-member="${esc(x.id)}" class="${x.id === m.id ? 'on' : ''}">${esc(memberName(x))}</button>`).join('')
+    + `<button type="button" class="add" id="chipAdd" aria-label="${esc(u.addMember)}">+ ${esc(u.addMember)}</button>`;
+  $$('#memberChips [data-member]').forEach((b) => { b.onclick = () => setActiveMember(b.dataset.member); });
+  $('#chipAdd').onclick = () => openFamily({ adding: true });
+  const n = reportsOf(m.id).length;
+  $('#archiveLine').innerHTML = `${esc(u.archiveLine(possOf(m), n))} · <button class="link" type="button" id="archiveOpen">${esc(u.viewArchive)}</button>`;
+  $('#archiveOpen').onclick = () => openFamily();
+  if (famUI.el) renderFamilyModal();
+}
+
+function setActiveMember(id, quiet) {
+  if (id === fam.archive.activeId) return;
+  fam.archive.activeId = id;
+  saveArchive();
+  applyMemberToInputs();
+  state.selectedDay = null; state.week = null;
+  if (state.currentReport) {
+    // 屏幕上是上一位成员的报告：收起来，免得看混
+    state.currentReport = null; state.items = [];
+    $('#result').hidden = true; $('#reportText').value = ''; $('#importNote').hidden = true; updateLineCount();
+  } else if (state.items.length) {
+    renderAll(false); renderSavedBar();
+  }
+  renderFamily();
+  if (!quiet) toast(t().switched(memberName(activeMember())));
+}
+
+async function saveCurrentReport() {
+  const m = activeMember();
+  const res = Family.upsertReport(fam.reports, { memberId: m.id, text: $('#reportText').value, ocr: state.ocr, briefing: state.briefing });
+  fam.reports = res.reports;
+  state.currentReport = res.report;
+  renderSavedBar();
+  renderFamily();
+  await reportDB.put(res.report);
+}
+
+function renderSavedBar() {
+  const u = t();
+  const bar = $('#savedBar');
+  const r = state.currentReport;
+  const who = possOf(activeMember());
+  if (r) {
+    bar.className = 'saved-bar';
+    bar.innerHTML = `<span>✓ ${esc(u.savedTo(who))}</span>
+      <label>${esc(u.reportDate)} <input type="date" id="reportDate" value="${esc(r.date)}" max="${Family.todayISO()}"></label>
+      <button class="link" type="button" id="savedView">${esc(u.viewAll)}</button>`;
+    $('#reportDate').onchange = (e) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(e.target.value)) return;
+      r.date = e.target.value; r.updatedAt = Date.now();
+      reportDB.put(r); renderFamily();
+    };
+    $('#savedView').onclick = () => openFamily();
+  } else if (state.isSample && state.items.length) {
+    bar.className = 'saved-bar sample';
+    bar.innerHTML = `<span>${esc(u.sampleNoSave)}</span><button class="link" type="button" id="saveSample">${esc(u.saveSample(who))}</button>`;
+    $('#saveSample').onclick = () => { state.isSample = false; saveCurrentReport(); };
+  } else { bar.hidden = true; return; }
+  bar.hidden = false;
+}
+
+function openReport(r) {
+  if (r.memberId !== fam.archive.activeId) setActiveMember(r.memberId, true);
+  closeFamily();
+  state.ocr = r.ocr; state.isSample = false;
+  $('#importNote').hidden = true;
+  $('#reportText').value = r.text;
+  updateLineCount();
+  run();
+}
+
+async function deleteReports(ids) {
+  fam.reports = fam.reports.filter((r) => !ids.includes(r.id));
+  if (state.currentReport && ids.includes(state.currentReport.id)) { state.currentReport = null; renderSavedBar(); }
+  renderFamily();
+  await reportDB.del(ids);
+}
+
+/* 家庭档案弹窗 */
+const famUI = { el: null, adding: false, renaming: null, pending: null };
+function openFamily(opts = {}) {
+  famUI.adding = !!opts.adding; famUI.renaming = null; famUI.pending = null;
+  if (!famUI.el) {
+    famUI.el = document.createElement('div');
+    famUI.el.className = 'share-modal fam-modal';
+    famUI.el.setAttribute('role', 'dialog');
+    famUI.el.setAttribute('aria-modal', 'true');
+    famUI.el.onclick = (e) => { if (e.target === famUI.el) closeFamily(); };
+    document.body.appendChild(famUI.el);
+    document.addEventListener('keydown', famEsc);
+  }
+  renderFamilyModal();
+  const first = famUI.adding ? $('#famName', famUI.el) : null;
+  if (first) first.focus();
+}
+function famEsc(e) { if (e.key === 'Escape') closeFamily(); }
+function closeFamily() {
+  if (!famUI.el) return;
+  famUI.el.remove(); famUI.el = null;
+  document.removeEventListener('keydown', famEsc);
+}
+
+function renderFamilyModal() {
+  const u = t();
+  const el = famUI.el;
+  const active = activeMember();
+  const year = new Date().getFullYear();
+  const members = fam.archive.members.map((m) => {
+    const n = reportsOf(m.id).length;
+    const meta = `${u.ageN(Family.memberAge(m, year))} · ${m.sex === 'female' ? u.female : u.male} · ${u.reportsN(n)}`;
+    const nameCell = famUI.renaming === m.id
+      ? `<form class="fam-rename" data-id="${esc(m.id)}"><input type="text" maxlength="20" value="${esc(m.name || '')}" placeholder="${esc(memberName(m))}" aria-label="${esc(u.rename)}"><button class="btn primary small" type="submit">${esc(u.save2)}</button></form>`
+      : `<button type="button" class="fam-pick" data-id="${esc(m.id)}"><i class="avatar">${esc(memberInitial(m))}</i><span><b>${esc(memberName(m))}</b><small>${esc(meta)}</small></span></button>`;
+    return `<div class="fam-member ${m.id === active.id ? 'on' : ''}">${nameCell}
+      ${famUI.renaming === m.id ? '' : `<span class="fam-ops"><button class="link" type="button" data-rename="${esc(m.id)}">${esc(u.rename)}</button><button class="link danger" type="button" data-delmember="${esc(m.id)}">${esc(u.del)}</button></span>`}</div>`;
+  }).join('');
+  const addForm = famUI.adding ? `
+    <form class="fam-add" id="famAdd">
+      <input type="text" id="famName" maxlength="20" placeholder="${esc(u.namePh)}" aria-label="${esc(u.namePh)}">
+      <input type="number" id="famBirth" min="0" max="${year}" placeholder="${esc(u.birthPh)}" aria-label="${esc(u.birthPh)}">
+      <div class="seg wide" id="famSex"><button type="button" data-sex="male" class="on">${esc(u.male)}</button><button type="button" data-sex="female">${esc(u.female)}</button></div>
+      <span class="fam-add-btns"><button class="btn primary small" type="submit">${esc(u.add)}</button><button class="btn ghost small" type="button" id="famAddCancel">${esc(u.cancel)}</button></span>
+    </form>` : `<button class="btn ghost small fam-add-open" type="button" id="famAddOpen">+ ${esc(u.addMember)}</button>`;
+  const reps = reportsOf(active.id);
+  const repRows = reps.length ? reps.map((r) => `
+    <div class="fam-report">
+      <span class="fam-date">${esc(r.date)}</span>
+      ${r.score != null ? `<span class="badge ${r.color || 'gray'}">${r.score} ${esc(u.points)}</span>` : ''}
+      <span class="muted small fam-counts">${r.counts ? esc(u.countsShort(r.counts.abnormal, r.counts.borderline)) : ''}</span>
+      <span class="fam-ops"><button class="link" type="button" data-open="${esc(r.id)}">${esc(u.open)}</button><button class="link danger" type="button" data-delreport="${esc(r.id)}">${esc(u.del)}</button></span>
+    </div>`).join('') : `<p class="muted small fam-empty">${esc(u.noReports)}</p>`;
+  const pending = famUI.pending ? `
+    <div class="fam-confirm">
+      <p>${esc(u.importFound(famUI.pending.archive.members.length, famUI.pending.reports.length))}</p>
+      <span><button class="btn primary small" type="button" id="famMerge">${esc(u.merge)}</button>
+      <button class="btn ghost small" type="button" id="famReplace">${esc(u.replace)}</button>
+      <button class="link" type="button" id="famPendingCancel">${esc(u.cancel)}</button></span>
+    </div>` : '';
+
+  el.innerHTML = `<div class="box fam-box">
+    <div class="fam-head"><h3>${esc(u.familyTitle)}</h3><button class="fam-x" type="button" id="famClose" aria-label="${esc(u.close)}">×</button></div>
+    <p class="muted small fam-hint">${esc(u.familyHint)}</p>
+    <div class="group-title">${esc(u.membersN(fam.archive.members.length))}</div>
+    <div class="fam-members">${members}</div>
+    ${addForm}
+    <div class="group-title">${esc(u.reportsOf(possOf(active), reps.length))}</div>
+    <div class="fam-reports">${repRows}</div>
+    <div class="group-title">${esc(u.ioTitle)}</div>
+    <div class="fam-io">
+      <button class="btn ghost small" type="button" id="famExport">${esc(u.exportBtn)}</button>
+      <button class="btn ghost small" type="button" id="famImport">${esc(u.importBtn)}</button>
+      <input type="file" id="famImportFile" accept=".json,application/json" hidden>
+    </div>
+    ${pending}
+    <p class="muted small fam-hint">${esc(u.ioHint)}</p>
+  </div>`;
+
+  $('#famClose', el).onclick = closeFamily;
+  $$('.fam-pick', el).forEach((b) => { b.onclick = () => setActiveMember(b.dataset.id); });
+  $$('[data-rename]', el).forEach((b) => { b.onclick = () => { famUI.renaming = b.dataset.rename; renderFamilyModal(); const i = $('.fam-rename input', el); if (i) { i.focus(); i.select(); } }; });
+  $$('.fam-rename', el).forEach((f) => {
+    f.onsubmit = (e) => {
+      e.preventDefault();
+      const m = fam.archive.members.find((x) => x.id === f.dataset.id);
+      const v = $('input', f).value.trim().slice(0, 20);
+      if (m) { m.name = v || null; saveArchive(); }
+      famUI.renaming = null; renderFamily(); renderSavedBar();
+    };
+  });
+  $$('[data-delmember]', el).forEach((b) => {
+    b.onclick = async () => {
+      if (fam.archive.members.length <= 1) { toast(u.lastMember); return; }
+      const m = fam.archive.members.find((x) => x.id === b.dataset.delmember);
+      const ids = reportsOf(m.id).map((r) => r.id);
+      if (!confirm(u.confirmDelMember(memberName(m), ids.length))) return;
+      const wasActive = m.id === fam.archive.activeId;
+      const res = Family.removeMember(fam.archive, fam.reports, m.id);
+      fam.archive.members = res.archive.members;
+      if (wasActive) { fam.archive.activeId = null; setActiveMember(res.archive.activeId, true); }
+      saveArchive();
+      await deleteReports(ids);
+    };
+  });
+  const addOpen = $('#famAddOpen', el);
+  if (addOpen) addOpen.onclick = () => { famUI.adding = true; renderFamilyModal(); $('#famName', el).focus(); };
+  const add = $('#famAdd', el);
+  if (add) {
+    $$('#famSex button', el).forEach((b) => { b.onclick = () => $$('#famSex button', el).forEach((x) => x.classList.toggle('on', x === b)); });
+    $('#famAddCancel', el).onclick = () => { famUI.adding = false; renderFamilyModal(); };
+    add.onsubmit = (e) => {
+      e.preventDefault();
+      const name = $('#famName', el).value.trim();
+      if (!name) { toast(u.needName); $('#famName', el).focus(); return; }
+      const m = Family.createMember({ name, birthYear: $('#famBirth', el).value, sex: $('#famSex .on', el).dataset.sex });
+      fam.archive.members.push(m);
+      saveArchive();
+      famUI.adding = false;
+      setActiveMember(m.id, true);
+      renderFamily();
+      toast(u.added(memberName(m)));
+    };
+  }
+  $$('[data-open]', el).forEach((b) => { b.onclick = () => openReport(fam.reports.find((r) => r.id === b.dataset.open)); });
+  $$('[data-delreport]', el).forEach((b) => {
+    b.onclick = () => {
+      const r = fam.reports.find((x) => x.id === b.dataset.delreport);
+      if (r && confirm(u.confirmDelReport(r.date))) deleteReports([r.id]);
+    };
+  });
+  $('#famExport', el).onclick = exportFamily;
+  $('#famImport', el).onclick = () => $('#famImportFile', el).click();
+  $('#famImportFile', el).onchange = async (e) => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+      famUI.pending = Family.normalizeImport(await f.text());
+      renderFamilyModal();
+    } catch (err) {
+      console.warn('import failed', err);
+      toast(u.importBad);
+    }
+  };
+  if (famUI.pending) {
+    $('#famMerge', el).onclick = () => applyImport('merge');
+    $('#famReplace', el).onclick = () => { if (confirm(u.confirmReplace)) applyImport('replace'); };
+    $('#famPendingCancel', el).onclick = () => { famUI.pending = null; renderFamilyModal(); };
+  }
+}
+
+function exportFamily() {
+  const data = Family.exportArchive(fam.archive, fam.reports);
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `checkup-brief-family-${Family.todayISO().replace(/-/g, '')}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast(t().exported);
+}
+
+async function applyImport(mode) {
+  const u = t();
+  const inc = famUI.pending;
+  famUI.pending = null;
+  const prevActive = fam.archive.activeId;
+  if (mode === 'replace') {
+    fam.archive = inc.archive;
+    fam.reports = inc.reports;
+    await reportDB.replaceAll(fam.reports);
+    toast(u.replaced);
+  } else {
+    const res = Family.mergeArchives(fam.archive, fam.reports, inc.archive, inc.reports);
+    fam.archive = res.archive;
+    const before = new Set(fam.reports.map((r) => r.id));
+    fam.reports = res.reports;
+    for (const r of fam.reports) if (!before.has(r.id)) await reportDB.put(r);
+    toast(u.imported2(res.added.members, res.added.reports));
+  }
+  saveArchive();
+  if (fam.archive.activeId !== prevActive || mode === 'replace') {
+    const id = fam.archive.activeId;
+    fam.archive.activeId = null;
+    setActiveMember(id, true);
+  }
+  renderFamily();
+}
+
 /* ---------- 主流程 ---------- */
 function readProfile() {
   state.profile.age = parseInt($('#age').value, 10) || 32;
   state.profile.sex = $('#sexSeg .on').dataset.sex;
   state.profile.familyHistory = $$('#familyChips .on').map((b) => b.dataset.fam);
   state.profile.budget = parseInt($('#budget').value, 10);
+  // 年龄 / 性别 / 家族史跟着当前成员走
+  const m = activeMember();
+  const year = new Date().getFullYear();
+  const birthYear = year - state.profile.age;
+  const fh = state.profile.familyHistory.join('|');
+  if (m.birthYear !== birthYear || m.sex !== state.profile.sex || m.familyHistory.join('|') !== fh) {
+    m.birthYear = birthYear; m.sex = state.profile.sex; m.familyHistory = [...state.profile.familyHistory];
+    saveArchive();
+    renderFamily();
+  }
 }
 
 function renderAll(animate) {
@@ -523,8 +934,9 @@ function showNote(html, warn) {
   n.className = 'import-note' + (warn ? ' warn' : '');
   n.innerHTML = html;
 }
-async function handleFile(file) {
+async function handleFile(file, isSample = false) {
   const u = t();
+  state.isSample = isSample;
   $('#importNote').hidden = true;
   setProgress('load', 0);
   try {
@@ -534,6 +946,7 @@ async function handleFile(file) {
     $('#reportText').value = text;
     updateLineCount();
     state.ocr = r.method.includes('ocr');
+    state.isSample = isSample;
     const n = text.split('\n').filter((l) => l.trim()).length;
     showNote(esc(u.imported[r.method](file.name, n, r.pages)) + (state.ocr ? '<br>' + esc(u.ocrWarn) : ''), state.ocr);
     run();
@@ -547,7 +960,7 @@ async function loadSampleFile(kind) {
   const url = SAMPLE_FILES[kind];
   const res = await fetch(url);
   const blob = await res.blob();
-  handleFile(new File([blob], url.split('/').pop(), { type: blob.type || (kind === 'pdf' ? 'application/pdf' : 'image/jpeg') }));
+  handleFile(new File([blob], url.split('/').pop(), { type: blob.type || (kind === 'pdf' ? 'application/pdf' : 'image/jpeg') }), true);
 }
 
 function run(scroll = true) {
@@ -561,6 +974,8 @@ function run(scroll = true) {
     $('#result').hidden = false;
     showTab('brief');
     renderAll(true);
+    if (!state.isSample) saveCurrentReport();
+    else { state.currentReport = null; renderSavedBar(); }
     if (scroll) $('#result').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 450);
 }
@@ -573,17 +988,17 @@ function showTab(name) {
 
 /* ---------- 事件 ---------- */
 $$('.nav .seg button').forEach((b) => {
-  b.onclick = () => { state.lang = b.dataset.lang; store.set('lang', state.lang); applyI18n(); renderAll(false); };
+  b.onclick = () => { state.lang = b.dataset.lang; store.set('lang', state.lang); applyI18n(); renderFamily(); renderSavedBar(); renderAll(false); };
 });
-$$('#sexSeg button').forEach((b) => { b.onclick = () => { $$('#sexSeg button').forEach((x) => x.classList.toggle('on', x === b)); if (state.items.length) { readProfile(); renderAll(false); } }; });
-$$('#familyChips button').forEach((b) => { b.onclick = () => { b.classList.toggle('on'); if (state.items.length) { readProfile(); renderAll(false); } }; });
+$$('#sexSeg button').forEach((b) => { b.onclick = () => { $$('#sexSeg button').forEach((x) => x.classList.toggle('on', x === b)); readProfile(); if (state.items.length) renderAll(false); }; });
+$$('#familyChips button').forEach((b) => { b.onclick = () => { b.classList.toggle('on'); readProfile(); if (state.items.length) renderAll(false); }; });
 $('#budget').oninput = (e) => { $('#budgetVal').textContent = '¥' + e.target.value; if (state.items.length) { readProfile(); renderPackage(); } };
-$('#age').onchange = () => { if (state.items.length) { readProfile(); renderAll(false); } };
-$('#reportText').oninput = () => { state.ocr = false; updateLineCount(); };
-$('#loadSample').onclick = () => { state.ocr = false; $('#importNote').hidden = true; $('#reportText').value = SAMPLE_TEXT; updateLineCount(); };
-$('#clearText').onclick = () => { state.ocr = false; $('#importNote').hidden = true; $('#reportText').value = ''; updateLineCount(); };
+$('#age').onchange = () => { readProfile(); if (state.items.length) renderAll(false); };
+$('#reportText').oninput = () => { state.ocr = false; state.isSample = false; updateLineCount(); };
+$('#loadSample').onclick = () => { state.ocr = false; state.isSample = true; $('#importNote').hidden = true; $('#reportText').value = SAMPLE_TEXT; updateLineCount(); };
+$('#clearText').onclick = () => { state.ocr = false; state.isSample = false; $('#importNote').hidden = true; $('#reportText').value = ''; updateLineCount(); };
 $('#runBtn').onclick = () => run();
-$('#ctaSample').onclick = () => { state.ocr = false; $('#reportText').value = SAMPLE_TEXT; updateLineCount(); run(); };
+$('#ctaSample').onclick = () => { state.ocr = false; state.isSample = true; $('#reportText').value = SAMPLE_TEXT; updateLineCount(); run(); };
 $$('#tabs button').forEach((b) => { b.onclick = () => showTab(b.dataset.tab); });
 
 const dz = $('#dropZone');
@@ -603,9 +1018,14 @@ document.addEventListener('paste', (e) => {
   if (f) { e.preventDefault(); handleFile(f); }
 });
 
+$('#memberPill').onclick = () => openFamily();
+
 /* Hero 小卡片的分数环 */
 animateRing($('#heroRingBar'), $('#heroScore'), 68, 314.16);
 
 applyI18n();
+applyMemberToInputs();
+renderFamily();
+loadReports();
 // 链接里带 #demo 时直接载入示例，方便分享演示。
-if (location.hash === '#demo') { $('#reportText').value = SAMPLE_TEXT; updateLineCount(); run(false); }
+if (location.hash === '#demo') { state.isSample = true; $('#reportText').value = SAMPLE_TEXT; updateLineCount(); run(false); }

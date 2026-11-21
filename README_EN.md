@@ -59,6 +59,7 @@ You could paste it into a chatbot, but it may invent reference ranges, answer di
 - **Traffic lights** with a gauge showing where your value sits in the reference range
 - **One plain sentence** per abnormal result
 - **Share image** in one click; or print / save as PDF for your doctor
+- **Family archive**: keep one for your parents too. Reports and 30-day check-ins are stored per member (Dad, Mom, Me…), and age, sex and family history fill in the next-checkup planner automatically. Export the whole archive as one JSON file and import it on another phone; it still lives only on the device
 
 <p align="center">
   <img src="docs/assets/brief-en.png" alt="Brief" width="72%">
@@ -170,9 +171,10 @@ Sample (32-year-old male): 4 out of range −28, fasting glucose and blood press
 
 ## Privacy
 
-- Parsing, scoring and recommendations all happen locally; nothing is uploaded or stored
+- Parsing, scoring and recommendations all happen locally; nothing is uploaded
 - No analytics, no tracking, no third-party requests; PDF.js, the OCR model and fonts ship in the repo ([web/vendor](web/vendor/README.md)), no CDN
-- Check-ins and language preference live only in your browser's `localStorage`
+- The family archive lives only in your browser: members and check-ins in `localStorage`, reports as recognised text and scores in IndexedDB, **never the original photos / PDFs**; delete any report or member at any time
+- Archive export is a JSON file generated on your device, and import happens on-device too, with no network
 - Please never post a real report in issues, PRs or screenshots. See [docs/PRIVACY.md](docs/PRIVACY.md)
 
 ## Roadmap
