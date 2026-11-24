@@ -136,3 +136,12 @@ test('合并到一台新手机：空白的“我”不会出现两个', () => {
   const res2 = F.mergeArchives({ members: [dad], activeId: 'dad' }, [], { members: [blank], activeId: 'blank' }, []);
   assert.deepEqual(res2.archive.members.map((m) => m.id), ['dad']);
 });
+
+test('成员档案带入套餐推荐：按指引的年龄、性别、家族史出项目', () => {
+  const { recommendPackage } = require('../src/package-recommender.js');
+  const dad = F.createMember({ name: '爸爸', age: 66, sex: 'male', familyHistory: ['糖尿病'] }, Y);
+  const p = recommendPackage({ profile: F.memberProfile(dad, Y), items: [] });
+  const names = p.optional.map((x) => x.name);
+  ['肺功能 + 骨密度', '口服葡萄糖耐量试验', 'PSA + 前列腺超声'].forEach((n) => assert.ok(names.includes(n), n));
+  assert.ok(p.optional.every((x) => x.source && x.source.startsWith('依据：')));
+});

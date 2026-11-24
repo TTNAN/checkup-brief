@@ -87,7 +87,7 @@ Most Chinese hospitals hand out PDFs, so import comes first:
 Based on age, sex, family history, budget and this report's gaps:
 
 - **Add**: targeted rechecks, with rough prices and total vs budget
-- **Optional**: baseline screening by age / sex / family history
+- **Optional**: baseline screening by age / sex / family history, with age and sex thresholds from China NHC's Adult Health Checkup Item Guideline (2025), each item citing its source
 - **Skip**: tumor-marker panels "just in case", repeating normal tests, premium imaging beyond your budget
 
 <p align="center"><img src="docs/assets/package-en.png" alt="Next checkup" width="80%"></p>

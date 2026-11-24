@@ -128,3 +128,36 @@ test('非 OCR 模式不做任何纠错', () => {
   const [tc] = parseReportText('总胆固醇 612 mmol/L <5.2');
   assert.equal(tc.value, 612);
 });
+
+test('下次查什么：年龄 / 性别阈值对齐卫健委 2025 指引，且每条都带依据', () => {
+  const names = (p) => p.optional.map((x) => x.name);
+  const young = recommendPackage({ profile: { age: 32, sex: 'male' }, items: [], budget: 1500 });
+  assert.ok(names(young).some((n) => n.startsWith('甲状腺功能')));
+  assert.ok(!names(young).some((n) => n.includes('肺功能')));
+  assert.ok(!names(young).some((n) => n.includes('葡萄糖耐量')));
+  assert.ok(young.skip.some((x) => x.name.includes('肿瘤标志物')));
+
+  const p40 = recommendPackage({ profile: { age: 40, sex: 'female' }, items: [], budget: 1500 });
+  assert.ok(names(p40).includes('肺功能 + 骨密度'));
+  assert.ok(names(p40).includes('口服葡萄糖耐量试验'));
+  assert.ok(names(p40).some((n) => n.includes('HPV')));
+  assert.ok(!names(p40).some((n) => n.includes('胃镜')));
+  assert.ok(p40.skip.some((x) => x.name.includes('肿瘤标志物')));
+
+  const dad = recommendPackage({ profile: { age: 63, sex: 'male', familyHistory: ['肿瘤'] }, items: [], budget: 1500 });
+  ['胃镜 / 结肠镜', '认知功能筛查（量表）', 'PSA + 前列腺超声', '按家族癌种做针对性筛查'].forEach((n) => assert.ok(names(dad).includes(n), n));
+  assert.ok(!dad.skip.some((x) => x.name.includes('肿瘤标志物')));
+
+  [young, p40, dad].forEach((p) => p.optional.forEach((x) => {
+    assert.match(x.source, /^依据：国家卫健委《成人健康体检项目推荐指引（2025 年版）》/);
+    assert.match(x.sourceUrl, /^https:\/\/www\.nhc\.gov\.cn\//);
+  }));
+  const en = recommendPackage({ profile: { age: 45, sex: 'male' }, items: [], lang: 'en' });
+  en.optional.forEach((x) => assert.match(x.source, /^Source: China NHC, Adult Health Checkup Item Guideline \(2025\)/));
+});
+
+test('报告里已有甲功时不再推荐甲功', () => {
+  const items = parseReportText('促甲状腺激素 2.1 mIU/L 0.27-4.2');
+  const p = recommendPackage({ profile: { age: 32, sex: 'male' }, items });
+  assert.ok(!p.optional.some((x) => x.name.startsWith('甲状腺功能')));
+});

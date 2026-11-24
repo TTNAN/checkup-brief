@@ -217,6 +217,8 @@ pre.json { background: var(--paper-2); border-radius: 14px; padding: 16px; font-
 .col ul { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 12px; }
 .col li { padding: 12px 14px; background: var(--paper); border-radius: 12px; font-size: 14px; }
 .col li b { display: block; font-size: 15px; }
+.col li .cite { display: block; margin-top: 6px; font-size: 12px; line-height: 1.45; color: var(--muted); text-decoration: none; }
+.col li .cite:hover { text-decoration: underline; }
 .col li span { color: var(--muted); }
 .col li em { font-style: normal; font-family: var(--mono); font-size: 12px; color: var(--brand-2); }
 .col.skip li b { text-decoration: line-through; text-decoration-color: var(--muted); }

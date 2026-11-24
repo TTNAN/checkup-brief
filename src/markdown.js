@@ -55,7 +55,7 @@ function renderMarkdown(text, profile = {}, lang = 'zh') {
   out.push(t.pkg, '');
   for (const [label, list] of [[t.add, pkg.add], [t.opt, pkg.optional], [t.skip, pkg.skip]]) {
     if (!list.length) continue;
-    out.push(`**${label}**`, '', ...list.map((x) => `- ${x.name}：${x.reason}${x.price ? `（${x.price}）` : ''}`.replace(/：/, lang === 'en' ? ': ' : '：').replace(/（(.*)）$/, lang === 'en' ? ' ($1)' : '（$1）')), '');
+    out.push(`**${label}**`, '', ...list.map((x) => `- ${x.name}：${x.reason}${x.price ? `（${x.price}）` : ''}`.replace(/：/, lang === 'en' ? ': ' : '：').replace(/（(.*)）$/, lang === 'en' ? ' ($1)' : '（$1）') + (x.source ? `\n  - [${x.source}](${x.sourceUrl})` : '')), '');
   }
   out.push(pkg.note, '');
 

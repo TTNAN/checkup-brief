@@ -69,6 +69,7 @@ const UI = {
     pkgAdd: '建议加查', pkgOpt: '可选', pkgSkip: '可以省掉',
     estimate: (lo, hi, b) => `建议加查的项目大约 ¥${lo}–${hi}，你的预算 ¥${b}`,
     noAdd: '本次没有需要针对性复查的项目。',
+    noOpt: '按你的年龄、性别和家族史，暂无需额外加查的指引项目。',
     bring: '带上这些', ask: '问医生这几个问题', copyQ: '复制问题', noClinic: '这次没有需要专门挂号的指标，按常规每年体检即可。',
     weekN: (n) => `第 ${n} 周`, today3: '今天的 3 件小事', dayN: (n) => `第 ${n} 天`,
     checkin: '30 天打卡', streak: (n) => `连续 ${n} 天`, eat: '吃', move: '动', sleep: '睡',
@@ -140,6 +141,7 @@ const UI = {
     pkgAdd: 'Add these', pkgOpt: 'Optional', pkgSkip: 'Skip these',
     estimate: (lo, hi, b) => `Recommended add-ons cost about ¥${lo}–${hi}; your budget is ¥${b}`,
     noAdd: 'Nothing needs a targeted recheck this time.',
+    noOpt: 'No extra guideline items for your age, sex and family history.',
     bring: 'Bring', ask: 'Ask the doctor', copyQ: 'Copy questions', noClinic: 'Nothing needs a dedicated visit. A routine yearly checkup is enough.',
     weekN: (n) => `Week ${n}`, today3: 'Today\'s three small things', dayN: (n) => `Day ${n}`,
     checkin: '30-day check-in', streak: (n) => `${n}-day streak`, eat: 'Eat', move: 'Move', sleep: 'Sleep',
@@ -357,7 +359,7 @@ function renderParser() {
 function renderPackage() {
   const u = t();
   const rec = recommendPackage({ profile: state.profile, items: state.items, budget: state.profile.budget, lang: state.lang });
-  const li = (x) => `<li><b>${esc(x.name)}</b><span>${esc(x.reason)}</span>${x.price ? `<br><em>${esc(x.price)}</em>` : ''}</li>`;
+  const li = (x) => `<li><b>${esc(x.name)}</b><span>${esc(x.reason)}</span>${x.price ? `<br><em>${esc(x.price)}</em>` : ''}${x.source ? `<a class="cite" href="${esc(x.sourceUrl)}" target="_blank" rel="noopener" title="${esc(x.source)}">${esc(x.source)}</a>` : ''}</li>`;
   const max = Math.max(state.profile.budget, rec.estimate.high) * 1.05;
   $('#panel-package').innerHTML = `
     ${rec.add.length ? `<div class="card budget-bar">
@@ -367,7 +369,7 @@ function renderPackage() {
       <div class="small muted">${esc(rec.note)}</div></div>` : ''}
     <div class="cols">
       <div class="card col"><h3><i class="red"></i>${u.pkgAdd}</h3><ul>${rec.add.map(li).join('') || `<li>${u.noAdd}</li>`}</ul></div>
-      <div class="card col"><h3><i class="yellow"></i>${u.pkgOpt}</h3><ul>${rec.optional.map(li).join('')}</ul></div>
+      <div class="card col"><h3><i class="yellow"></i>${u.pkgOpt}</h3><ul>${rec.optional.map(li).join('') || `<li>${u.noOpt}</li>`}</ul></div>
       <div class="card col skip"><h3><i class="green"></i>${u.pkgSkip}</h3><ul>${rec.skip.map(li).join('')}</ul></div>
     </div>`;
   requestAnimationFrame(() => requestAnimationFrame(() => { $$('.fill[data-w]').forEach((f) => { f.style.width = f.dataset.w + '%'; }); }));

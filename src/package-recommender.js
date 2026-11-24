@@ -11,6 +11,8 @@
 
 'use strict';
 
+const GUIDELINE_URL = 'https://www.nhc.gov.cn/yzygj/c100068/202511/4feaeb6de63e44cb9fd4ac8f579ca279.shtml';
+
 const FAMILY_KEYS = {
   diabetes: ['糖尿病', 'diabetes'],
   cardio: ['心血管', 'cardio', 'heart'],
@@ -64,28 +66,57 @@ function recommendPackage(input) {
   }
 
   // —— 按年龄、性别、家族史，推荐基础加查 ——
-  if ((profile.age || 0) >= 30) {
-    push(optional, '甲状腺超声 + 甲功', 'Thyroid ultrasound + function', '30 岁后甲状腺问题渐多，基础筛查', 'Thyroid issues become more common after 30', 200, 300);
+  // 年龄 / 性别阈值对齐国家卫健委《成人健康体检项目推荐指引（2025 年版）》（国卫办医政函〔2025〕412 号）：
+  //   附件 2 基本体检项目：甲功（TSH、游离甲状腺激素）人人都查；女性加子宫附件、乳腺超声及 HPV / 宫颈细胞学（有性生活史）；
+  //     40 岁以上加肺功能、骨密度。
+  //   附件 3 / 附件 5：慢性病风险人群的加查项目和判定条件（糖尿病 ≥35 岁或一级亲属有糖尿病 → OGTT；
+  //     胃癌、食管癌 ≥45 岁且有危险因素 → 胃镜；结直肠癌评分 → 结肠镜；前列腺癌 男性 ≥60 岁 → PSA + 前列腺超声；
+  //     认知障碍 ≥50 岁 → 认知量表筛查）。
+  const age = profile.age || 0;
+  const cite = (annex) => ({
+    zh: `依据：国家卫健委《成人健康体检项目推荐指引（2025 年版）》${annex.zh}`,
+    en: `Source: China NHC, Adult Health Checkup Item Guideline (2025), ${annex.en}`,
+  });
+  const BASIC = cite({ zh: '附件 2 基本体检项目', en: 'Annex 2: basic items' });
+  const RISK = cite({ zh: '附件 3、5 慢性病风险筛查', en: 'Annexes 3 & 5: chronic-disease risk screening' });
+  const opt = (zhName, enName, zhReason, enReason, low, high, src) => {
+    push(optional, zhName, enName, zhReason, enReason, low, high);
+    const x = optional[optional.length - 1];
+    x.source = T(src.zh, src.en);
+    x.sourceUrl = GUIDELINE_URL;
+  };
+
+  if (age >= 18 && !byId.tsh) {
+    opt('甲状腺功能（TSH、游离甲状腺激素）', 'Thyroid function (TSH, free T4)', '指引把甲功列为成人基本体检项目，本次报告里没看到', 'The guideline lists thyroid function as a basic adult item; it isn\'t in this report', 60, 120, BASIC);
   }
-  if ((profile.age || 0) >= 40 || hasFamily('cancer')) {
-    push(optional, '肿瘤标志物筛查', 'Tumor marker screening', '40 岁后或有家族史，可作辅助参考，不能单独确诊', 'After 40 or with family history; supportive only, never diagnostic alone', 300, 600);
+  if (age >= 40) {
+    opt('肺功能 + 骨密度', 'Lung function + bone density', '指引：40 岁以上在基本项目里增加肺功能检查和骨密度检测', 'Guideline: from 40, add a lung function test and a bone density scan to the basic items', 150, 300, BASIC);
   }
-  if ((profile.age || 0) >= 45) {
-    push(optional, '胃肠镜', 'Endoscopy / colonoscopy', '45 岁后建议做一次基线检查', 'A baseline check is advised after 45', 800, 1500);
-  }
-  if (hasFamily('diabetes')) {
-    push(optional, '口服葡萄糖耐量试验', 'Oral glucose tolerance test', '有糖尿病家族史，空腹血糖偏高时值得做', 'Family history of diabetes — worth it when fasting glucose runs high', 100, 150);
+  if (age >= 35 || hasFamily('diabetes')) {
+    opt('口服葡萄糖耐量试验', 'Oral glucose tolerance test', '年龄 ≥35 岁或一级亲属有糖尿病，属指引里的糖尿病风险人群，优先推荐 OGTT', 'Age 35+ or a parent / sibling with diabetes puts you in the guideline\'s diabetes-risk group; OGTT is the first-line add-on', 100, 150, RISK);
   }
   if (hasFamily('cardio')) {
-    push(optional, '心电图 + 心脏超声', 'ECG + echocardiogram', '有心血管家族史，基础心脏筛查', 'Family history of heart disease — baseline screening', 200, 400);
+    opt('超声心动图 + 颈动脉超声', 'Echocardiogram + carotid ultrasound', '心电图已是基本项目；有心血管家族史，可请医生评估 10 年心血管风险，属风险人群时优先加这两项', 'An ECG is already basic; with heart disease in the family, ask for a 10-year risk estimate — these two come first if you\'re at risk', 300, 500, RISK);
+  }
+  if (age >= 45) {
+    opt('胃镜 / 结肠镜', 'Gastroscopy / colonoscopy', '45 岁起，如有吸烟、饮酒、高盐腌制饮食、幽门螺杆菌阳性或一级亲属胃癌 / 肠癌等，属指引里的胃癌、结直肠癌风险人群', 'From 45, smoking, drinking, salty / pickled food, H. pylori, or a parent / sibling with stomach or bowel cancer puts you in the guideline\'s risk group', 800, 1500, RISK);
+  }
+  if (age >= 50) {
+    opt('认知功能筛查（量表）', 'Cognitive screening (questionnaire)', '指引推荐 50 岁以上开展脑认知健康筛查', 'The guideline recommends cognitive screening from 50', 0, 0, RISK);
+  }
+  if (profile.sex === 'male' && age >= 60) {
+    opt('PSA + 前列腺超声', 'PSA + prostate ultrasound', '指引：60 岁以上男性属前列腺癌风险人群', 'Guideline: men 60+ are in the prostate-cancer risk group', 150, 300, RISK);
   }
   if (profile.sex === 'female') {
-    push(optional, '乳腺超声 + 妇科超声', 'Breast + pelvic ultrasound', '女性常规筛查项目', 'Routine screening for women', 300, 500);
+    opt('乳腺超声 + 子宫附件超声 + HPV / 宫颈细胞学', 'Breast + pelvic ultrasound, HPV / cervical cytology', '指引列为女性基本体检项目（HPV、宫颈细胞学限有性生活史）', 'Basic items for women in the guideline (HPV and cervical cytology if sexually active)', 300, 600, BASIC);
+  }
+  if (hasFamily('cancer')) {
+    opt('按家族癌种做针对性筛查', 'Screening for the cancer that runs in the family', '指引按具体癌种定风险人群（如一级亲属肺癌、乳腺癌、肠癌），先问清是哪种癌，再做对应的影像或内镜；肿瘤标志物只作可选辅助', 'The guideline sets risk groups per cancer type; find out which cancer it was, then do the matching scan or scope — tumor markers are only an optional extra', 300, 1500, RISK);
   }
 
   // —— 可以省掉的 ——
-  if (!hasFamily('cancer') && (profile.age || 0) < 40) {
-    push(skip, '盲目加做全套肿瘤标志物', 'A full tumor-marker panel "just in case"', '没有家族史、没有异常指向时，单独查意义有限，还容易引起不必要的焦虑', 'Without family history or a lead, it adds little and often adds anxiety');
+  if (!hasFamily('cancer')) {
+    push(skip, '盲目加做全套肿瘤标志物', 'A full tumor-marker panel "just in case"', '指引里肿瘤标志物只是特定癌症风险人群的可选项；没有家族史、没有异常指向时，单独查意义有限，还容易引起不必要的焦虑', 'In the guideline, tumor markers are only optional extras for specific cancer-risk groups; without family history or a lead they add little and often add anxiety');
   }
   push(skip, '重复查已正常的项目', 'Repeating tests that were normal', '上次正常且没有新症状的项目，不必每年都加', 'If it was normal and nothing changed, no need to repeat every year');
   if (budget && budget < 2000) {
@@ -108,7 +139,7 @@ function recommendPackage(input) {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { recommendPackage };
+  module.exports = { recommendPackage, GUIDELINE_URL };
 }
 if (typeof globalThis !== 'undefined') {
   globalThis.recommendPackage = recommendPackage;
